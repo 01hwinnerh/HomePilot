@@ -8,13 +8,18 @@
 
 **技术栈：** Python 3.12 + uv、FastAPI、SQLAlchemy、Alembic、MySQL 8.4、Redis 7.4、Celery、React、TypeScript、Vite、LangChain、LangGraph、LangSmith、Qdrant、MinIO、Docker Compose。
 
+**版本策略：** 使用稳定大版本范围，首次安装后由 `uv.lock`、`pnpm-lock.yaml` 固定精确版本；Docker 的 Qdrant 与 MinIO 在首次成功拉取后记录精确 tag/digest。依赖解析或框架兼容问题必须先向用户说明，不能自行替换。
+
+**Git 协作：** 每个可独立说明的模块完成后，先提示用户手动提交一个准确的 Conventional Commit，并创建或更新 GitHub PR；后续模块不得混入该 Commit。
+
 ---
 
 ## 阶段 0：环境基线与工程骨架
 
 - [x] 确认项目展示名称：HomePilot。
 - [x] 用户安装 uv 管理的 Python 3.12。
-- [ ] 核验并确认依赖版本矩阵，生成 `pyproject.toml`、`package.json` 与 Compose 镜像标签。
+- [x] 确认依赖版本策略：稳定大版本 + 锁文件。
+- [ ] 生成 `pyproject.toml`、`package.json` 与 Compose 镜像标签，并由用户完成首次安装/拉取。
 - [ ] 创建 `.env.example`、Docker Compose、后端与前端 workspace、测试及代码质量配置。
 - [ ] 由用户启动基础设施并完成后端健康检查、前端空页面、测试基线验证。
 

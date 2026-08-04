@@ -23,9 +23,15 @@
 
 ## 待确认的兼容性事项
 
-- 后端与 Agent/RAG 库需要锁定为一组已验证兼容的版本后，才创建 `pyproject.toml` 并让用户执行安装。
-- Node 24 属于较新的运行时；前端 Vite、Vitest 与 ESLint 的组合必须选择明确支持 Node 24 的版本。
-- Docker 镜像标签（MySQL、Redis、Qdrant、MinIO）需要在 compose 文件生成前确定。
+- 依赖策略已确认：采用兼容的稳定大版本范围，并由 `uv.lock`、`pnpm-lock.yaml` 固定实际解析版本。
+- Docker 对 MySQL 固定 `8.4`、Redis 固定 `7.4`；Qdrant 与 MinIO 在用户首次成功拉取后记录精确 tag/digest。
+- Node 24 与 Vite/Vitest/ESLint 的实际兼容性将在用户执行 `pnpm install` 后通过锁文件和测试结果确认；若解析失败则停止并向用户提供替代版本。
+
+## Git 协作规则
+
+- 助手不执行任何 Git 命令；用户在指定目录手动执行。
+- 每个可独立说明的模块完成后，必须先创建一次语义清晰的 Conventional Commit，再创建或更新对应 GitHub PR。
+- 不将无关功能混入同一次 Commit；进入下一个模块前，先提醒用户完成上一个模块的 Commit/PR。
 
 ## 错误记录
 

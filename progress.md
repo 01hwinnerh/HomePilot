@@ -1,0 +1,10 @@
+# HomePilot 开发进度日志
+
+## 2026-08-04
+
+- 完成架构、业务边界、租户安全、库存策略、策略快照、RAG 版本治理、Agent 人工接管和评测方案确认。
+- 用户确认 Python 通过 uv 管理，不覆盖 Anaconda Python 3.11。
+- 用户确认默认模型为 DeepSeek `deepseek-v4-flash`，模型与 API 地址均集中由 `.env` 和 Typed Settings 管理。
+- 用户确认后续所有安装命令和 Git 命令自行在终端执行；助手只提供目录、命令和预期结果。
+- 用户已手动完成 `uv python install 3.12`。
+- 已创建项目级计划与进度追踪文档；阶段 0 保持进行中，等待依赖版本矩阵确认。

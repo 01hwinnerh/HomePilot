@@ -57,6 +57,21 @@
 - 每个可独立说明的模块完成后，必须先创建一次语义清晰的 Conventional Commit，再创建或更新对应 GitHub PR。
 - 不将无关功能混入同一次 Commit；进入下一个模块前，先提醒用户完成上一个模块的 Commit/PR。
 
+## 数据库基础层发现（2026-08-05）
+
+- 当前仓库尚无 `backend/alembic.ini` 与 `backend/alembic/`，异步迁移环境需要从明确的 Red 测试开始建立。
+- Docker MySQL 当前只通过 `MYSQL_DATABASE` 初始化业务库 `homepilot`；集成测试必须使用独立 `homepilot_test`，不能在业务库中创建或清理测试表。
+- 本地已存在的 MySQL volume 不会重新执行 `docker-entrypoint-initdb.d` 初始化脚本，因此补充自动初始化脚本后，本机仍需显式执行一次测试库初始化命令；该命令由用户手动运行。
+- 第一个数据库集成 Red 实际返回 MySQL `1044 Access denied`，说明 `homepilot` 用户没有 `homepilot_test` 权限；修复边界是创建隔离测试库并只授予该库权限，而不是提升业务用户的全局权限。
+- 后续 TDD 中，结果完全可预测且只产生冗长堆栈的 Red 不再要求用户手动执行；助手记录 Red 依据，用户重点执行 Green、集成回归和提交前验证。
+- 测试库权限修复后，`asyncmy` 已进入 MySQL 8.4 默认 `caching_sha2_password` 认证流程，但环境缺少其 RSA 加密所需的可选包 `cryptography`；`pyproject.toml`、`uv.lock` 与 `uv pip show` 均确认该包不存在。
+- 推荐保留 MySQL 8.4 的现代认证方式，并将 `cryptography` 声明为后端直接运行时依赖；不回退到较弱且在 MySQL 8.4 中默认禁用的 `mysql_native_password`，也不为本地开发单独引入 TLS 证书体系。
+- 已检查已安装的 `asyncmy 0.2.11` 包元数据：它没有提供可选 extra 来自动拉取该依赖，因此需要在 HomePilot 的 `pyproject.toml` 中显式声明 `cryptography`。
+- 用户执行 `uv sync --all-groups` 后解析并安装 `cryptography 46.0.7`；该版本满足已确认的 `>=44,<47` 范围，并已由 `uv.lock` 精确固定。
+- 数据库基础层项目级回归通过；前端仍有既存的 Ant Design 控制台 chunk 超过 500 kB 和 `eslint.config.js` 未声明 ESM 的非阻塞警告，留到前端功能阶段单独处理，不混入数据库 Commit。
+- 提交前独立审查发现：带 DDL/DML 的集成测试若误配 `TEST_DATABASE_URL` 可能操作业务库；迁移测试在持久库上直接 `upgrade head` 也可能产生假阳性。现采用统一安全闸门（测试库名必须含 `test` 且不同于业务库）、pytest session fixture、Docker 初始化脚本同名拒绝，以及 `downgrade base → upgrade head` 修复。
+- 独立复审确认上述 Critical/Important 均已关闭，未发现新的提交阻塞项。
+
 ## 错误记录
 
 | 时间 | 现象 | 处理 |
@@ -67,3 +82,7 @@
 | 2026-08-04 | Hatchling 无法推断 `homepilot-api` 的实际代码包 | 在 `pyproject.toml` 显式设置 wheel 的 `packages = ["app"]` |
 | 2026-08-04 | Ruff 要求将第三方 `fastapi` 与项目包 `app` 分组，且 import 区块后只保留一个空行 | 按 Ruff 完整 diff 调整为 `fastapi`、空行、`app`、空行、模块变量 |
 | 2026-08-05 | Codex 受限沙箱在安装 PowerShell 7 后无法启动 WindowsApps `pwsh.exe` | 不影响用户终端；安装、Git 与验证命令继续由用户手动执行 |
+| 2026-08-05 | MySQL 权限修复后，`asyncmy` 报错缺少 `cryptography` | 已确认是 `caching_sha2_password` 的运行时依赖缺口；等待用户确认新增依赖后修复 |
+| 2026-08-05 | Alembic 新目录导致 Ruff 将 `alembic` import 识别为项目本地分组 | 按 Ruff 的项目路径解析结果，将 SQLAlchemy 与 `alembic/app` 分组 |
+| 2026-08-05 | Codex 工具环境无法识别 `C:\\Program Files\\PowerShell\\7\\pwsh.exe` | 未进入项目验证脚本；改由工具当前 PowerShell 进程直接执行 ASCII 脚本 |
+| 2026-08-05 | 提交前审查发现测试库误配可能让回滚测试在业务库执行 DDL/DML | 增加 Python 与 Docker 双重安全闸门，并将拒绝分支加入自动化验证 |

@@ -27,6 +27,7 @@
 
 ## 阶段 1：身份、租户、商家与商品
 
+- [x] 建立异步 SQLAlchemy Session、隔离测试库、Alembic 基线迁移及连接/回滚/迁移集成测试。
 - [ ] 建立用户认证、RBAC、`TenantContext` 与平台/商家角色。
 - [ ] 对商家归属数据实施显式 tenant/principal Repository 参数和 SQLAlchemy 额外过滤。
 - [ ] 建立商家、店铺、成员、商品、SKU、库存、图片和上下架模型与接口。

@@ -23,6 +23,30 @@
 - 已新增 ASCII PowerShell 全量验证脚本 `scripts/verify_stack.ps1`，覆盖后端、前端和 Docker 基础设施。
 - 用户已成功执行 `scripts/verify_stack.ps1`：后端 pytest/Ruff、前端 build/Vitest/ESLint、Compose 配置及四个基础服务连通性全部通过。
 - `chore/project-scaffold` 实施与验证已完成，待用户手动 Commit 并创建 GitHub PR。
+- PR #1 已合并到 `main`，本地 `main` 已同步，旧工程骨架分支已删除。
+- 已创建 `feat/database-foundation` 分支，数据库基础层进入 TDD Red 阶段。
+- 数据库基础层 Red 测试按预期因 `app.core.database` 与 `app.shared.models` 未实现而失败。
+- 已实现 Green 最小代码：数据库 URL Settings、异步 Engine/Session 封装与 SQLAlchemy Base 命名约定。
+- `uv run pytest tests/unit -q` 连续两次通过（4 passed），数据库基础层 TDD Green 阶段完成。
+- Ruff 首次检查发现 3 处 import 格式问题：两处多余空行与一处同行 import 名称顺序，已按诊断修正。
+- 用户复验 `uv run ruff check .`，输出 `All checks passed!`；数据库基础层单元测试与静态检查均已通过，开始 Alembic + MySQL 集成阶段。
+- 数据库集成 TDD 第一个 Red 切片已加入：`test_test_database_accepts_queries` 明确使用 `TEST_DATABASE_URL` 连接隔离测试库；尚未创建测试库，等待用户运行以确认预期失败。
+- 用户运行数据库连接 Red，确认失败为 MySQL `1044 Access denied`；已增加测试库配置、最小权限初始化脚本及 Docker init 挂载，下一步只需为既有 volume 执行一次初始化并复验 Green。
+- 用户已重新加载 MySQL Compose 配置，并成功执行测试库初始化脚本；终端仅出现 MySQL 命令行密码提示警告，无执行错误。
+- 数据库连接 Green 复验两次均推进到 MySQL `caching_sha2_password` 认证后失败；已确认根因是后端未声明 `cryptography`，依赖变更按约定暂停并等待用户确认。
+- 用户确认采用现代 MySQL 认证兼容方案；已在后端运行时依赖中声明 `cryptography>=44,<47`，等待用户通过 uv 更新锁文件和虚拟环境。
+- 用户已成功同步后端环境：安装 `cryptography==46.0.7`，并重新安装本地 editable `homepilot-api`；准备复验数据库真实连接 Green。
+- 助手复验数据库真实连接 Green 通过（`1 passed`）；已加入 Alembic `upgrade head` 集成测试，开始异步迁移基线 Red→Green 切片。
+- Alembic 测试先按预期因缺少 `script_location` 失败；补齐异步 `env.py`、配置、迁移模板和空基线 revision 后复验通过，测试库当前 revision 为 `20260805_0001`。
+- 数据库事务异常回滚集成测试通过；首次后端回归发现两处 Alembic import 分组格式问题，已按 Ruff 确定输出修正。
+- 修正 import 后，后端全量 `8 passed`、Ruff `All checks passed`。
+- 项目级 `scripts/verify_stack.ps1` 回归通过：后端、两个前端的 build/Vitest/ESLint，以及 MySQL、Redis、Qdrant、MinIO 连通性全部正常。
+- 已补充后端配置、测试库初始化、Alembic 使用和验证文档，并同步数据库基础层计划勾选项。
+- 用户已将本地业务库升级到 `20260805_0001`；助手复验 `alembic current` 显示 `20260805_0001 (head)`。
+- 提交前独立审查发现 1 个 Critical 和 2 个 Important：测试库误配保护不足、迁移测试可能假阳性、测试库名称硬编码与配置冲突。
+- 已完成审查修复：统一测试库隔离校验及 3 个单元测试、所有集成测试复用安全 fixture、迁移测试先降至 base、Docker 初始化脚本拒绝同名/无 test 标识，并在全量脚本中验证拒绝分支。
+- 审查修复的定向验证已通过：安全单元测试 3 passed、数据库集成测试 3 passed、Ruff 通过、容器同名库保护按预期拒绝。
+- 审查修复后项目级全量回归通过：后端 11 passed、Ruff 通过、前端 build/Vitest/ESLint 通过、四个 Docker 服务连通；独立复审确认无剩余 Critical/Important，可进入 Commit/PR。
 
 - 完成架构、业务边界、租户安全、库存策略、策略快照、RAG 版本治理、Agent 人工接管和评测方案确认。
 - 用户确认 Python 通过 uv 管理，不覆盖 Anaconda Python 3.11。

@@ -4,19 +4,20 @@
 
 ## 当前状态
 
-- 当前阶段：阶段 0 — 环境基线与工程骨架
+- 当前阶段：阶段 1 — 身份、租户、商家与商品
 - 当前状态：`in_progress`
 - 项目名称：HomePilot
 - 最近确认：用户已通过 uv 安装 Python 3.12；所有安装与 Git 命令由用户手动执行。
 - 最近确认：采用“稳定大版本 + 锁文件固定精确版本”的依赖策略。
-- 当前阻塞：无；工程骨架已通过全量回归，等待用户完成 Commit 与 GitHub PR。
+- 当前模块：数据库基础层（实现、审查与全量回归完成，待 Commit 和 GitHub PR）。
+- 当前阻塞：无。
 
 ## 阶段追踪
 
 | 阶段 | 目标 | 状态 | 验收结果 |
 |---|---|---|---|
-| 0 | 环境基线、依赖锁定、工程骨架与本地基础设施 | 进行中 | 未开始验证 |
-| 1 | 身份、租户隔离、商家、店铺、商品与库存 | 未开始 | — |
+| 0 | 环境基线、依赖锁定、工程骨架与本地基础设施 | 已完成 | PR #1 已合并，全量回归通过 |
+| 1 | 身份、租户隔离、商家、店铺、商品与库存 | 进行中 | 数据库基础层开发中 |
 | 2 | 跨店购物车、订单、库存预占与模拟支付 | 未开始 | — |
 | 3 | 售后策略版本、规则引擎、售后状态机 | 未开始 | — |
 | 4 | 知识版本、异步索引、RAG 与跨店对比 | 未开始 | — |
@@ -35,7 +36,17 @@
 - [x] 由用户手动启动 Docker Compose 并验证服务健康。
 - [x] 锁定 Qdrant/MinIO 已验证镜像 digest。
 - [x] 运行工程骨架小型全量回归。
-- [ ] 完成 `chore/project-scaffold` Commit 与 GitHub PR。
+- [x] 完成 `chore/project-scaffold` Commit 与 GitHub PR #1。
+
+## 当前模块：数据库基础层
+
+- [x] Red：为数据库 Settings、SQLAlchemy Database 封装和 Base metadata 写失败单元测试，已确认因目标模块缺失而失败。
+- [x] Green：实现集中数据库配置、AsyncEngine/Session 和命名约定，4 个单元测试连续两次通过。
+- [x] Quality：Ruff import 格式问题已修复，用户复验全量静态检查通过。
+- [x] Alembic：创建可运行的异步迁移基线。
+- [x] Integration：验证 MySQL 连通、事务回滚和 Alembic upgrade。
+- [x] Regression：审查修复后后端 11 个测试、Ruff 及工程小型全量回归通过，复审无 Critical/Important。
+- [ ] 完成 `feat/database-foundation` Commit 与 GitHub PR。
 
 ## 更新约定
 
@@ -44,6 +55,7 @@
 3. 任何架构变更先更新 `docs/adr/` 与实施计划，再修改代码。
 4. 任何依赖冲突、外部服务缺失或连续失败三次的事项都标注为阻塞，并先向用户说明。
 5. 每个可独立说明的模块完成后，先提示用户手动执行 Commit 并发起 GitHub PR；下一模块不得与该 Commit 混合。Commit 信息采用 Conventional Commits，并准确描述本模块边界。
+6. 预期必然失败的 TDD Red、诊断命令和静态探针由助手执行并记录；用户主要执行 Green、阶段回归、安装/Docker 状态变更和 Git 命令，且每条用户命令都说明目录、作用与预期结果。
 
 ## 非范围
 

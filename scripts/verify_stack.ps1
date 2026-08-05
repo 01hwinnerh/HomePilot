@@ -62,6 +62,14 @@ try {
         throw "MySQL returned an unexpected response: $mysqlResponse"
     }
 
+    $testDatabaseGuard = & docker compose exec -T -e MYSQL_DATABASE=homepilot -e MYSQL_TEST_DATABASE=homepilot mysql sh /docker-entrypoint-initdb.d/10-create-test-database.sh 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        throw "Test database guard accepted the business database name."
+    }
+    if (($testDatabaseGuard -join "`n") -notmatch "must differ") {
+        throw "Test database guard returned an unexpected error: $testDatabaseGuard"
+    }
+
     $qdrantStatus = (Invoke-WebRequest -Uri "http://127.0.0.1:6333/healthz").StatusCode
     if ($qdrantStatus -ne 200) {
         throw "Qdrant health check returned HTTP $qdrantStatus."

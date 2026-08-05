@@ -9,7 +9,7 @@
 - 项目名称：HomePilot
 - 最近确认：用户已通过 uv 安装 Python 3.12；所有安装与 Git 命令由用户手动执行。
 - 最近确认：采用“稳定大版本 + 锁文件固定精确版本”的依赖策略。
-- 当前模块：数据库基础层（实现、审查与全量回归完成，待 Commit 和 GitHub PR）。
+- 当前模块：身份、租户与认证实施计划（已确认，待创建文档 PR）。
 - 当前阻塞：无。
 
 ## 阶段追踪
@@ -17,7 +17,7 @@
 | 阶段 | 目标 | 状态 | 验收结果 |
 |---|---|---|---|
 | 0 | 环境基线、依赖锁定、工程骨架与本地基础设施 | 已完成 | PR #1 已合并，全量回归通过 |
-| 1 | 身份、租户隔离、商家、店铺、商品与库存 | 进行中 | 数据库基础层开发中 |
+| 1 | 身份、租户隔离、商家、店铺、商品与库存 | 进行中 | 数据库基础层 PR 已合并；身份认证设计已确认 |
 | 2 | 跨店购物车、订单、库存预占与模拟支付 | 未开始 | — |
 | 3 | 售后策略版本、规则引擎、售后状态机 | 未开始 | — |
 | 4 | 知识版本、异步索引、RAG 与跨店对比 | 未开始 | — |
@@ -37,6 +37,9 @@
 - [x] 锁定 Qdrant/MinIO 已验证镜像 digest。
 - [x] 运行工程骨架小型全量回归。
 - [x] 完成 `chore/project-scaffold` Commit 与 GitHub PR #1。
+- [x] 完成数据库基础层 Commit 与 GitHub PR，已合并至 `main`。
+- [x] 确认身份、refresh token、CSRF、RBAC 与多租户隔离设计；规格见 `docs/superpowers/specs/2026-08-05-identity-tenancy-auth-design.md`。
+- [x] 编写身份、租户与认证的 TDD 实施计划；见 `docs/superpowers/plans/2026-08-05-identity-tenancy-auth-implementation.md`。
 
 ## 当前模块：数据库基础层
 
@@ -46,7 +49,7 @@
 - [x] Alembic：创建可运行的异步迁移基线。
 - [x] Integration：验证 MySQL 连通、事务回滚和 Alembic upgrade。
 - [x] Regression：审查修复后后端 11 个测试、Ruff 及工程小型全量回归通过，复审无 Critical/Important。
-- [ ] 完成 `feat/database-foundation` Commit 与 GitHub PR。
+- [x] 完成 `feat/database-foundation` Commit 与 GitHub PR。
 
 ## 更新约定
 

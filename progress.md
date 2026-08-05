@@ -18,6 +18,11 @@
 
 ## 2026-08-05
 
+- 数据库基础层 PR 已合并至 `main`，本地工作区已同步且干净。
+- 用户确认身份、认证、RBAC 与租户隔离设计：顾客自助注册；商家成员/平台管理员由种子数据创建；采用内存 access JWT、HttpOnly rotating refresh Cookie 和 CSRF 防护。
+- 已新增身份认证设计规格与 ADR；尚未修改认证代码、数据库迁移或依赖声明，下一步是让用户审阅规格后编写实施计划。
+- 用户已确认身份认证规格；已完成对应的细化 TDD 实施计划。计划把依赖确认设置为 Task 1 的硬门槛，并将模型、认证 API、租户隔离、商城登录、控制台登录和最终联调拆分为独立 Commit/PR 边界。
+
 - 已将实际拉取并通过健康验证的 Qdrant/MinIO 镜像 digest 写入 `.env.example`，防止 `latest` 标签漂移。
 - 已同步本地 `.env` 的两个镜像变量，未读取或修改 API Key。
 - 已新增 ASCII PowerShell 全量验证脚本 `scripts/verify_stack.ps1`，覆盖后端、前端和 Docker 基础设施。

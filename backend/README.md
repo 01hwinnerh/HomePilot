@@ -8,6 +8,8 @@
 
 - `DATABASE_URL` 指向本地业务库 `homepilot`；
 - `TEST_DATABASE_URL` 指向隔离测试库 `homepilot_test`；
+- `AUTH_JWT_SECRET` 是本地随机 JWT 签名密钥，必须只写入未提交的 `.env`；可在 `backend` 目录用 `uv run python -c "import secrets; print(secrets.token_urlsafe(48))"` 生成；
+- `AUTH_COOKIE_SECURE=false` 仅适用于本地 HTTP 开发。未来生产 HTTPS 部署必须设为 `true`，并使用精确的 `BACKEND_CORS_ORIGINS`，不能使用 `*`；
 - 集成测试不得在业务库中创建或清理测试数据。
 
 测试库名称可以修改，但必须包含 `test` 且不得与业务库名称相同；集成测试和 Docker 初始化脚本会在执行 DDL/DML 前强制校验这两个条件。
@@ -43,3 +45,9 @@ uv run ruff check .
 ```
 
 当前集成测试覆盖测试库真实连接、异常事务回滚和 `alembic upgrade head`。
+
+认证基础单元测试还覆盖 Argon2 密码哈希、access JWT、opaque refresh token、CSRF 双重提交值、认证时长、CORS 白名单和限流配置：
+
+```powershell
+uv run pytest tests/unit/test_security.py tests/unit/test_database_settings.py -q
+```

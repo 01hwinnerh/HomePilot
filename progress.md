@@ -18,6 +18,12 @@
 
 ## 2026-08-05
 
+- 用户确认认证运行时依赖并完成 `uv sync --all-groups`；锁文件固定 `argon2-cffi 25.1.0`、`email-validator 2.3.0` 和 `PyJWT 2.13.0`。
+- 认证配置与安全原语按垂直 TDD 完成：Argon2 密码哈希、HS256 access JWT、opaque refresh/CSRF token、CSRF 常量时间比较、JWT 篡改/类型拒绝、精确 CORS、Cookie 安全开关、时长边界、Redis 地址和限流配置。
+- 用户已在本地 `.env` 设置 `AUTH_JWT_SECRET`；助手未读取该值。`.env.example` 仅含安全占位符和开发默认值。
+- 用户与助手均完成认证定向回归；最新后端全量验证为 `26 passed`，Ruff 为 `All checks passed!`。FastAPI/Starlette 的既存 TestClient 废弃警告保留，未混入本模块处理。
+- 认证安全原语模块待用户手动 Commit 和 GitHub PR；在此之前不开始身份数据模型和 Alembic 迁移。
+
 - 数据库基础层 PR 已合并至 `main`，本地工作区已同步且干净。
 - 用户确认身份、认证、RBAC 与租户隔离设计：顾客自助注册；商家成员/平台管理员由种子数据创建；采用内存 access JWT、HttpOnly rotating refresh Cookie 和 CSRF 防护。
 - 已新增身份认证设计规格与 ADR；尚未修改认证代码、数据库迁移或依赖声明，下一步是让用户审阅规格后编写实施计划。

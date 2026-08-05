@@ -1,7 +1,9 @@
 from functools import lru_cache
 from pathlib import Path
+from typing import Annotated, Literal
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, SecretStr, field_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
@@ -22,12 +24,38 @@ class Settings(BaseSettings):
     app_env: str = "development"
     app_debug: bool = False
     api_v1_prefix: str = "/api/v1"
+    backend_cors_origins: Annotated[list[str], NoDecode] = [
+        "http://localhost:5173",
+        "http://localhost:5174",
+    ]
     database_url: str = (
         "mysql+asyncmy://homepilot:change-me-local@127.0.0.1:3306/homepilot"
     )
     test_database_url: str = (
         "mysql+asyncmy://homepilot:change-me-local@127.0.0.1:3306/homepilot_test"
     )
+    redis_url: str = "redis://127.0.0.1:6379/0"
+    auth_jwt_secret: SecretStr
+    auth_jwt_issuer: str = "homepilot-api"
+    auth_jwt_algorithm: Literal["HS256"] = "HS256"
+    auth_access_token_minutes: int = Field(default=15, ge=1, le=60)
+    auth_refresh_token_days: int = Field(default=7, ge=1, le=30)
+    auth_cookie_secure: bool = False
+    auth_cookie_same_site: Literal["lax"] = "lax"
+    auth_rate_limit_enabled: bool = True
+    auth_rate_limit_max_attempts: int = Field(default=5, ge=1, le=100)
+    auth_rate_limit_window_seconds: int = Field(default=900, ge=1, le=3600)
+
+    @field_validator("backend_cors_origins", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, value: str | list[str]) -> list[str]:
+        if isinstance(value, str):
+            origins = [origin.strip() for origin in value.split(",") if origin.strip()]
+        else:
+            origins = value
+        if "*" in origins:
+            raise ValueError("BACKEND_CORS_ORIGINS must not contain '*'.")
+        return origins
 
 
 @lru_cache

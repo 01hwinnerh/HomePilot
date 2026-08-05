@@ -19,9 +19,9 @@
 - [x] 确认项目展示名称：HomePilot。
 - [x] 用户安装 uv 管理的 Python 3.12。
 - [x] 确认依赖版本策略：稳定大版本 + 锁文件。
-- [ ] 生成 `pyproject.toml`、`package.json` 与 Compose 镜像标签，并由用户完成首次安装/拉取。
-- [ ] 创建 `.env.example`、Docker Compose、后端与前端 workspace、测试及代码质量配置。
-- [ ] 由用户启动基础设施并完成后端健康检查、前端空页面、测试基线验证。
+- [x] 生成 `pyproject.toml`、`package.json` 与 Compose 镜像标签，并由用户完成首次安装/拉取。
+- [x] 创建 `.env.example`、Docker Compose、后端与前端 workspace、测试及代码质量配置。
+- [x] 由用户启动基础设施并完成后端健康检查、前端空页面、测试基线验证。
 
 **验收：** 新开发者可依据 README 和 `.env.example` 连接本地服务，两个前端应用、后端健康检查和空测试集均可运行。
 

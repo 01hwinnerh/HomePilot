@@ -2,6 +2,28 @@
 
 ## 2026-08-04
 
+- `chore/project-scaffold` 已生成工程骨架：后端健康探针与测试、前端两个 Vite 应用、pnpm workspace、Docker Compose、`.env.example` 和无安装的环境检查脚本。
+- 已通过 PowerShell 静态解析校验三个 `package.json`；尚未安装依赖，因此未运行后端、前端或 Docker 验证。
+- 安装前静态复核已将前端构建命令修正为 `tsc --noEmit`，并补充 ESLint Flat Config 与 Vitest 运行器烟雾测试。
+- 已定位并修复 `bootstrap.ps1` 的 Windows PowerShell 5.1 编码兼容问题：所有执行脚本保持 ASCII，避免无 BOM UTF-8 中文解析失败。
+- 已修复 `uv sync` 的 Hatchling 可编辑构建失败：明确指定 `app` 为需打包的 Python 目录。
+- 用户在 PowerShell 7 中成功执行 `uv sync --all-groups`，创建 `.venv`、生成 `uv.lock`并安装了后端与 Agent/RAG 依赖。
+- 后端健康探针测试通过；已根据 Ruff 完整 diff 修正第三方/项目 import 分组与 import 区块后的空行数量。
+- 用户复验 `uv run ruff check .` 通过；后端骨架的测试与静态检查已完成。
+- 前端首次 `pnpm install` 完成 338 个包的解析；pnpm 阻止了 `esbuild` 安装脚本，已以 `onlyBuiltDependencies` 显式白名单修复。
+- 商城与控制台均已通过 TypeScript/Vite 生产构建和 Vitest 烟雾测试。
+- 在首次 ESLint 执行前发现 Flat Config 缺少 TS/TSX 解析器，已增加 `typescript-eslint` 和官方推荐规则。
+- 用户已完成前端增量依赖安装，并复验 `pnpm run lint` 通过；前端骨架的构建、测试与静态检查全部通过。
+- Docker Compose 已启动 MySQL、Redis、Qdrant 和 MinIO；四个服务均通过进程状态和实际连通性验证。
+
+## 2026-08-05
+
+- 已将实际拉取并通过健康验证的 Qdrant/MinIO 镜像 digest 写入 `.env.example`，防止 `latest` 标签漂移。
+- 已同步本地 `.env` 的两个镜像变量，未读取或修改 API Key。
+- 已新增 ASCII PowerShell 全量验证脚本 `scripts/verify_stack.ps1`，覆盖后端、前端和 Docker 基础设施。
+- 用户已成功执行 `scripts/verify_stack.ps1`：后端 pytest/Ruff、前端 build/Vitest/ESLint、Compose 配置及四个基础服务连通性全部通过。
+- `chore/project-scaffold` 实施与验证已完成，待用户手动 Commit 并创建 GitHub PR。
+
 - 完成架构、业务边界、租户安全、库存策略、策略快照、RAG 版本治理、Agent 人工接管和评测方案确认。
 - 用户确认 Python 通过 uv 管理，不覆盖 Anaconda Python 3.11。
 - 用户确认默认模型为 DeepSeek `deepseek-v4-flash`，模型与 API 地址均集中由 `.env` 和 Typed Settings 管理。

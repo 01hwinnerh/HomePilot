@@ -1,5 +1,6 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from functools import lru_cache
 
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import (
@@ -8,6 +9,8 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+
+from app.core.config import get_settings
 
 
 class UnsafeTestDatabaseError(ValueError):
@@ -59,3 +62,26 @@ class Database:
 
     async def dispose(self) -> None:
         await self.engine.dispose()
+
+
+@lru_cache
+def get_database() -> Database:
+    """Return the application database owner configured for this process."""
+
+    return Database(get_settings().database_url)
+
+
+async def get_db_session() -> AsyncIterator[AsyncSession]:
+    """FastAPI dependency that scopes an async database session to one request."""
+
+    database = get_database()
+    async with database.session() as session:
+        yield session
+
+
+async def close_database() -> None:
+    """Dispose the cached engine when the FastAPI process is shutting down."""
+
+    database = get_database()
+    await database.dispose()
+    get_database.cache_clear()

@@ -9,15 +9,15 @@
 - 项目名称：HomePilot
 - 最近确认：用户已通过 uv 安装 Python 3.12；所有安装与 Git 命令由用户手动执行。
 - 最近确认：采用“稳定大版本 + 锁文件固定精确版本”的依赖策略。
-- 当前模块：身份、商家与 refresh session 数据模型（Task 2，等待用户最终 Green 回归）。
-- 当前阻塞：无；业务库尚待用户升级至 revision `20260805_0002`。
+- 当前模块：认证服务、Cookie/CSRF API 与 Redis 限流（Task 3，等待用户最终 Green 回归）。
+- 当前阻塞：无；业务库须升级至 revision `20260805_0002` 后验证认证 API。
 
 ## 阶段追踪
 
 | 阶段 | 目标 | 状态 | 验收结果 |
 |---|---|---|---|
 | 0 | 环境基线、依赖锁定、工程骨架与本地基础设施 | 已完成 | PR #1 已合并，全量回归通过 |
-| 1 | 身份、租户隔离、商家、店铺、商品与库存 | 进行中 | 数据库基础层、认证安全原语已合并；身份模型等待最终 Green 回归 |
+| 1 | 身份、租户隔离、商家、店铺、商品与库存 | 进行中 | 身份模型已合并；认证 API 等待最终 Green 回归 |
 | 2 | 跨店购物车、订单、库存预占与模拟支付 | 未开始 | — |
 | 3 | 售后策略版本、规则引擎、售后状态机 | 未开始 | — |
 | 4 | 知识版本、异步索引、RAG 与跨店对比 | 未开始 | — |
@@ -60,15 +60,26 @@
 - [x] 执行本模块完整单元回归、后端全量回归与 Ruff：认证定向 16 passed，后端全量 26 passed，Ruff 通过。
 - [x] 完成 `feat(auth): add security configuration and token primitives` Commit 与 GitHub PR，并已合并至 `main`。
 
-## 当前模块：身份、商家与 refresh session 数据模型（Task 2）
+## 已完成模块：身份、商家与 refresh session 数据模型（Task 2）
 
 - [x] Red→Green：`User`、`Merchant`、`MerchantMember`、`AuthSession` ORM；商家成员联合唯一、refresh token 仅保存哈希、角色枚举、共享租户/审计 Mixin。
 - [x] Red→Green：revision `20260805_0002` 正向创建四张表、关键唯一/查询索引、外键与角色约束；反向按依赖顺序删除。
 - [x] 测试库迁移 fixture 在每次测试后回滚至 `base` 并断言四张领域表已删除，避免未提交迁移演进污染持久测试库。
 - [x] 架构修订：采用 ADR-0002 的 `UTCDateTime`；MySQL 存 UTC-naive，应用层读写 aware UTC，拒绝 naive 输入，不依赖数据库服务器时区。
 - [x] 助手验证：后端全量 `41 passed`、Ruff 通过、Alembic metadata 检查无新增操作。
-- [ ] 用户执行业务库迁移与最终 Green 回归。
-- [ ] 用户完成 `feat(identity): add users merchants and auth sessions` Commit 与 GitHub PR。
+- [x] 用户执行业务库迁移与最终 Green 回归。
+- [x] 用户完成 `feat(identity): add users merchants and auth sessions` Commit 与 GitHub PR，已合并。
+
+## 当前模块：认证服务、Cookie/CSRF API 与 Redis 限流（Task 3）
+
+- [x] Red→Green：`AuthService` 完成注册、统一登录失败、refresh rotation、用户有效性校验和当前用户查询；refresh 原文始终不写入数据库或日志。
+- [x] Red→Green：FastAPI `register/login/refresh/logout/me`、精确 CORS、HttpOnly refresh Cookie、双重提交 CSRF 和 Cookie 清理。
+- [x] Red→Green：Redis 固定窗口限流，键仅含 email/IP 的 SHA-256 组合摘要；真实 Redis 集成测试覆盖阈值拒绝。
+- [x] 集成回归：注册→`/me`、refresh rotation 与重放拒绝、CSRF 拒绝、logout 撤销、并发 refresh 至多成功一次。
+- [x] 提交前独立审查修复：refresh 限流按 refresh token 哈希分桶，不再让同一 IP 的不同用户共用配额；拒绝/幂等路径显式 rollback；`/me` 返回启用商家成员关系；补足停用/过期、Cookie 属性和安全日志脱敏回归。
+- [x] 复审加固：安全事件 payload 锁定为六个允许字段，回归检查不出现密码/JWT/refresh/CSRF/Cookie/Authorization 字符串；同 IP 不同 refresh session 使用不同限流 bucket；logout 缺失 CSRF 明确拒绝。
+- [x] 用户执行业务库迁移、认证定向回归、后端全量回归和 Ruff；复核修订后的全量测试为 56 passed，Ruff 通过。
+- [ ] 用户完成 `feat(auth): add rotating session authentication API` Commit 与 GitHub PR。
 
 ## 更新约定
 

@@ -18,6 +18,16 @@
 
 ## 2026-08-05
 
+- Task 3 认证服务进入实现与验证阶段：新增注册、登录、refresh 单次轮换、logout、`/me`、CSRF Cookie 和 Redis 固定窗口限流；无新增依赖或版本调整。
+- 助手完成服务层与 HTTP 集成 Red→Green。首次 API 集成测试发现迁移 fixture 只定义在旧测试模块内，已提升为 `tests/integration/conftest.py` 的共享 fixture。
+- 真实 `homepilot_test` + Redis 定向测试覆盖注册到 `/me`、refresh rotation/重放、CSRF/登出、并发 refresh 单次成功和限流 429。
+- 一次后端全量收集遇到 pytest 同名模块冲突；已把单元测试重命名为 `test_auth_rate_limiter.py`，避免与集成测试冲突。
+- 最新助手验证将在文档更新后由用户进行业务库迁移与最终回归；本模块尚未 Commit 或创建 PR。
+- 提交前只读审查发现 4 项 Important；已按原规格补齐并完成定向回归：refresh token 分桶限流、拒绝路径显式 rollback、`/me` 的启用商家成员列表，以及 Cookie/CSRF、停用/过期会话、并发 refresh 与安全日志脱敏测试。
+- 修复过程中，停用用户 refresh 回归暴露 rollback 后读取 ORM `user.id` 会触发 `MissingGreenlet`；现已在 rollback 前保存审计 ID。定向测试通过，等待重新执行全量最终验收。
+- 用户已执行审查修订后的业务库迁移、认证定向回归、全量 pytest 与 Ruff；结果均达到预期，全量为 56 passed。当前仅等待复审确认与 Task 3 的独立 Commit/PR。
+- 第二轮复审未发现 Critical；补齐剩余日志脱敏测试缺口及两项小型回归后，等待最终全量验证。未新增依赖、迁移或外部配置项。
+
 - 认证安全原语 PR 已合并；已从更新后的 `main` 创建 `feat/identity-tenancy-models`，进入 Task 2。
 - Task 2 采用纵向 TDD 建立 `User`、`Merchant`、`MerchantMember` 与 `AuthSession`。已验证商家成员联合唯一、`OWNER/STAFF` 角色、refresh token 仅保存哈希、用户/租户/轮换链路外键、关键索引及严格反向迁移。
 - 迁移测试曾因开发中扩展未提交 revision `20260805_0002` 而保留不完整 head 状态；已重建隔离库并改造 fixture，使每次测试结束后回滚到 `base` 且断言领域表已清理，后续修改同一未提交 revision 不再污染测试库。

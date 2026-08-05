@@ -92,6 +92,18 @@
 - MySQL `DATETIME` 不保存时区。ADR-0002 规定 `UTCDateTime`：领域层只传递 aware UTC 时间，写入归一化为 UTC-naive，读取恢复 aware UTC；`TimestampMixin` 使用 Python `utc_now()`，不依赖数据库服务器时区。
 - 当前 Alembic `command.check` 在 MySQL 测试库上返回 `No new upgrade operations detected.`，说明 ORM metadata 与 revision 的物理 schema 一致。
 
+## 认证服务与会话 API 发现（2026-08-05）
+
+- Cookie 名称和适用 Path 已补充为集中 Settings：`AUTH_REFRESH_COOKIE_NAME`、`AUTH_CSRF_COOKIE_NAME` 与 `AUTH_COOKIE_PATH`，避免路由中散落硬编码；默认仍是 `refresh_token`、`csrf_token` 与 `/api/v1/auth`。
+- refresh rotation 在同一数据库事务中使用 `SELECT ... FOR UPDATE` 锁定旧会话：旧会话被标记 `rotated`、新会话创建、链路 ID 写回后才提交。真实 MySQL 并发回归确认同一 refresh token 只有一次 200，其余请求为 401。
+- 认证限流采用 Redis `INCR` + 首次 `EXPIRE` 固定窗口；Redis key 只保存标准化 email 与 client IP 拼接值的 SHA-256，不保存可识别的邮箱或 IP 原文。
+- FastAPI 的 `204 No Content` logout 必须显式构造无内容 `Response` 再删除 Cookie；复用注入的 `Response` 会导致 ASGI 测试传输无法完成响应。该边界已有 CSRF、清 Cookie 与 refresh 重放回归。
+- unit 与 integration 目录不能使用同名顶层 pytest 模块；`test_auth_rate_limit.py` 与同名集成文件发生 module import mismatch，已将单元文件重命名为 `test_auth_rate_limiter.py`。
+- 提交前独立审查发现 refresh 请求不能只以空 email + IP 限流，否则同一 NAT 下所有用户会共享 5 次配额。现在 refresh 使用 refresh token 的 SHA-256 再哈希分桶，login/register 仍使用 email+IP 哈希；Redis key 不含原始 token、邮箱或 IP。
+- refresh 的 `SELECT ... FOR UPDATE` 拒绝路径现在显式 rollback。审查修复还发现 rollback 后 ORM 实例会过期，因此审计用 `user_id` 必须在 rollback 前提取，避免异步 `MissingGreenlet` 隐患；停用用户/过期 token 集成回归覆盖该场景。
+- `/me` 按身份规格返回活动商家成员关系（`merchant_id`、`merchant_name`、`OWNER/STAFF`）；仅返回成员与商家均为启用状态的记录。它是展示信息，不能替代后续 TenantContext 的逐请求授权查询。
+- 第二轮复审要求将安全日志验收从“仅不记录密码”提升为字段白名单保护。现有回归锁定 `security_event` payload 只能有 event/result/user_id/session_id/request_id/failure_reason，且 caplog 中不得出现 JWT、refresh/CSRF、Cookie 或 Authorization 的可识别值。
+
 ## 错误记录
 
 | 时间 | 现象 | 处理 |

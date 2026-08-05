@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     auth_refresh_token_days: int = Field(default=7, ge=1, le=30)
     auth_cookie_secure: bool = False
     auth_cookie_same_site: Literal["lax"] = "lax"
+    auth_refresh_cookie_name: str = "refresh_token"
+    auth_csrf_cookie_name: str = "csrf_token"
+    auth_cookie_path: str = "/api/v1/auth"
     auth_rate_limit_enabled: bool = True
     auth_rate_limit_max_attempts: int = Field(default=5, ge=1, le=100)
     auth_rate_limit_window_seconds: int = Field(default=900, ge=1, le=3600)

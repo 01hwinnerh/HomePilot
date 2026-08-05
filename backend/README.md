@@ -51,3 +51,9 @@ uv run ruff check .
 ```powershell
 uv run pytest tests/unit/test_security.py tests/unit/test_database_settings.py -q
 ```
+
+## 认证 API
+
+认证接口统一位于 `/api/v1/auth`：`POST /register`、`POST /login`、`POST /refresh`、`POST /logout` 与 `GET /me`。access token 仅通过响应 JSON 返回，供前端保存在内存中；refresh token 仅通过 `HttpOnly` Cookie 发送，数据库只保存其 SHA-256 哈希。`/me` 同时返回用户的平台管理员标志和所有“成员、商家均启用”的商家成员关系，前端只将其用于展示；后续商家操作仍会重新从数据库构建 TenantContext。
+
+`/refresh` 和 `/logout` 还必须在 `X-CSRF-Token` 请求头中带上与 `csrf_token` Cookie 一致的值。Cookie 名称与 Path 集中由 `AUTH_REFRESH_COOKIE_NAME`、`AUTH_CSRF_COOKIE_NAME`、`AUTH_COOKIE_PATH` 配置，生产环境应同时启用 HTTPS 与 `AUTH_COOKIE_SECURE=true`。

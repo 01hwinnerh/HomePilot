@@ -12,9 +12,9 @@
 
 ## 0. 实施边界、顺序与提交规则
 
-1. 先合并本计划和认证规格的文档 PR；代码必须从更新后的 `main` 新建 `feat/identity-tenancy-auth` 分支开始。
+1. 认证安全原语当前在 `feat/identity-tenancy-auth` 分支实施。每个 Task 必须各自创建独立 PR 并合并：Task 1 合并后删除当前分支，Task 2 从更新的 `main` 新建 `feat/identity-tenancy-models`，Task 3 为 `feat/auth-session-api`，Task 4 为 `feat/tenant-context`，Task 5 为 `feat/storefront-auth`，Task 6 为 `feat/console-auth`，Task 7 为 `test/identity-demo-seed`。
 2. Task 1 的依赖是硬门槛：在用户明确同意包名和版本范围前，不得编辑 `backend/pyproject.toml`，不得运行 `uv sync`。
-3. 每个 Task 完成后，先运行该 Task 的回归命令，再由用户手动 Commit 和创建/更新 GitHub PR；后续 Task 不得混入上一个 Task 的未提交改动。
+3. 每个 Task 完成后，先运行该 Task 的回归命令，再由用户手动 Commit、创建独立 GitHub PR 并合并；随后切回 `main`、快进同步、删除已合并本地分支并创建下一 Task 的分支。后续 Task 不得混入上一个 Task 的未提交改动。
 4. 按既定协作规则，助手执行预期失败的 Red/诊断；用户执行 Green、集成回归、Docker 状态变更、安装和所有 Git 命令。每条给用户的命令都要注明目录、作用和预期输出。
 5. 本计划不实现商品、订单、入驻审核、成员邀请、密码找回、邮件验证、OAuth、MFA 或真实支付。
 
@@ -52,6 +52,8 @@
 
 **目的：** 先建立所有认证模块共同使用的配置和纯安全函数；不建立数据库表或路由。
 
+**TDD 执行细化：** 本任务列出的密码、JWT、refresh token、CSRF 与 Settings 行为按“一个行为 → Red → 最小 Green”垂直切片实现，不把所有失败测试一次性写完。每一轮 Green 都只运行当前测试与既有相关测试；全部行为完成后再运行本 Task 的完整回归。
+
 **文件：**
 
 - 修改：`backend/pyproject.toml`
@@ -64,7 +66,7 @@
 - 修改：`backend/README.md`
 - 修改：`findings.md`、`progress.md`、`task_plan.md`
 
-- [ ] **Step 1: 先进行依赖确认，停止编码等待用户答复。**
+- [x] **Step 1: 先进行依赖确认，停止编码等待用户答复。**
 
   向用户说明当前 `pyproject.toml` 没有直接声明认证所需包，建议加入以下运行时依赖；Redis client 已存在，不新增限流第三方库：
 
@@ -78,7 +80,7 @@
 
   说明用途：`argon2-cffi` 用于密码哈希，`email-validator` 支持 Pydantic `EmailStr`，`PyJWT` 用于 HS256 access token，前端两个包只用于测试。询问用户确认后才进入 Step 2；若实际锁定版本与已有 Python 3.12、FastAPI/Pydantic、React 19/Vitest 组合不兼容，记录到 `findings.md` 并再次等待用户选择。
 
-- [ ] **Step 2: 助手编写安全工具的 Red 单元测试。**
+- [x] **Step 2: 助手编写安全工具的 Red 单元测试。**
 
   在 `test_security.py` 写出以下可独立验证的行为，使用固定 Settings/密钥而不读取用户 `.env`：
 
@@ -98,7 +100,7 @@
 
   同时在 `test_database_settings.py` 扩展 Settings 测试，断言 `auth_access_token_minutes == 15`、`auth_refresh_token_days == 7`、本地 `auth_cookie_secure is False`，并验证逗号分隔的 CORS origin 被解析为精确列表。
 
-- [ ] **Step 3: 助手运行 Red 并记录失败原因。**
+- [x] **Step 3: 助手运行 Red 并记录失败原因。**
 
   在 `backend` 目录运行：
 
@@ -108,7 +110,7 @@
 
   预期在 `app.core.security` 尚不存在或函数未定义时失败；该失败由助手诊断，不要求用户手动重复执行。
 
-- [ ] **Step 4: 用户确认依赖后，声明直接依赖并同步锁文件。**
+- [x] **Step 4: 用户确认依赖后，声明直接依赖并同步锁文件。**
 
   助手只用补丁把三个已确认的版本范围写入 `backend/pyproject.toml`，不手工编辑 `uv.lock`。用户在 **`D:\Project\Codex\vibe-coding\backend`** 终端执行：
 
@@ -118,7 +120,7 @@
 
   此命令将依据已确认的范围更新项目虚拟环境和 `uv.lock`；预期输出包含新增/确认的认证包且命令以退出码 0 结束。若解析提示版本冲突，停止，不尝试替换版本。
 
-- [ ] **Step 5: 实现集中认证 Settings 与 `.env.example`。**
+- [x] **Step 5: 实现集中认证 Settings 与 `.env.example`。**
 
   在 `Settings` 中增加并只从 `.env` 读取以下字段：
 
@@ -145,7 +147,7 @@
 
   预期输出一行随机字符串；用户复制到 `.env` 的 `AUTH_JWT_SECRET=` 后面，且不提交该文件。
 
-- [ ] **Step 6: 实现 `security.py` 的最小纯函数。**
+- [x] **Step 6: 实现 `security.py` 的最小纯函数。**
 
   使用 `argon2.PasswordHasher`，并将验证失败转换为 `False`；使用 `secrets.token_urlsafe(48)` 生成 refresh token、`secrets.token_urlsafe(32)` 生成 CSRF token；使用 SHA-256 十六进制摘要保存 refresh token；使用 `hmac.compare_digest` 比较 CSRF。JWT payload 和解码接口固定如下：
 
@@ -163,7 +165,7 @@
 
   `decode_access_token` 必须验证签名、算法、issuer、`typ == "access"` 和过期时间；任何 JWT 库异常统一转换为不包含 token 内容的 `InvalidAccessToken`。
 
-- [ ] **Step 7: 用户执行 Green 单元回归。**
+- [x] **Step 7: 用户执行 Green 单元回归。**
 
   在 **`D:\Project\Codex\vibe-coding\backend`** 执行：
 
@@ -184,7 +186,7 @@
   git push -u origin feat/identity-tenancy-auth
   ```
 
-  作用：提交可独立复用的认证基础。预期 commit 成功并将当前分支推送到远程；随后用户在 GitHub 为该分支创建或更新同一个认证功能 PR。
+  作用：提交可独立复用的认证基础。预期 commit 成功并将当前分支推送到远程；随后用户在 GitHub 为该分支创建独立 PR，合并后再开始 Task 2。
 
 ## 3. Task 2：身份、商家与会话持久化模型
 
@@ -288,7 +290,7 @@
   git push
   ```
 
-  作用：把可迁移的身份和租户数据结构独立交付到同一功能 PR；预期提交和 push 成功。
+  作用：把可迁移的身份和租户数据结构作为独立模块交付；预期提交和 push 成功，并创建独立 PR。
 
 ## 4. Task 3：认证服务、Cookie/CSRF API 与 Redis 限流
 
@@ -426,7 +428,7 @@
   git push
   ```
 
-  作用：提交完整、可独立验证的顾客认证 API。预期 push 更新已有认证功能 PR。
+  作用：提交完整、可独立验证的顾客认证 API。预期 push 成功，并创建独立 PR。
 
 ## 5. Task 4：Principal、TenantContext 与 Repository 硬隔离
 

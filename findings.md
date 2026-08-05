@@ -58,6 +58,11 @@
 - 每个可独立说明的模块完成后，必须先创建一次语义清晰的 Conventional Commit，再创建或更新对应 GitHub PR。
 - 不将无关功能混入同一次 Commit；进入下一个模块前，先提醒用户完成上一个模块的 Commit/PR。
 
+## 生产环境提醒约定（2026-08-05）
+
+- 用户要求在未来提出上线、部署或发布时，先提醒生产与开发的配置差异并完成前置检查，尤其是 `AUTH_COOKIE_SECURE=true`、`APP_DEBUG=false`、精确 CORS 白名单、独立高熵密钥、HTTPS 与基础设施备份/监控。
+- 在未明确生产环境域名、HTTPS、密钥来源、数据库备份和回滚策略前，不提供会直接对外暴露服务的部署操作。
+
 ## 数据库基础层发现（2026-08-05）
 
 - 当前仓库尚无 `backend/alembic.ini` 与 `backend/alembic/`，异步迁移环境需要从明确的 Red 测试开始建立。
@@ -72,6 +77,12 @@
 - 数据库基础层项目级回归通过；前端仍有既存的 Ant Design 控制台 chunk 超过 500 kB 和 `eslint.config.js` 未声明 ESM 的非阻塞警告，留到前端功能阶段单独处理，不混入数据库 Commit。
 - 提交前独立审查发现：带 DDL/DML 的集成测试若误配 `TEST_DATABASE_URL` 可能操作业务库；迁移测试在持久库上直接 `upgrade head` 也可能产生假阳性。现采用统一安全闸门（测试库名必须含 `test` 且不同于业务库）、pytest session fixture、Docker 初始化脚本同名拒绝，以及 `downgrade base → upgrade head` 修复。
 - 独立复审确认上述 Critical/Important 均已关闭，未发现新的提交阻塞项。
+
+## 认证安全原语发现（2026-08-05）
+
+- 用户确认并同步了认证直接依赖；锁文件实际固定 `argon2-cffi 25.1.0`、`email-validator 2.3.0`、`PyJWT 2.13.0`，均满足已确认的版本范围与 Python 3.12。
+- JWT 签名密钥只存在用户本地 `.env` 的 `AUTH_JWT_SECRET`，`.env.example` 只保留占位符；助手不读取或输出该密钥。
+- 当前配置明确拒绝带凭据 CORS 的 `*`，本地开发默认 `AUTH_COOKIE_SECURE=false`；生产上线时必须改为 HTTPS 下的 `true`，该提醒已写入总计划。
 
 ## 错误记录
 

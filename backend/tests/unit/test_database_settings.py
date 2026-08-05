@@ -47,6 +47,9 @@ def test_auth_settings_default_cookie_policy_is_lax() -> None:
     )
 
     assert settings.auth_cookie_same_site == "lax"
+    assert settings.auth_refresh_cookie_name == "refresh_token"
+    assert settings.auth_csrf_cookie_name == "csrf_token"
+    assert settings.auth_cookie_path == "/api/v1/auth"
 
 
 def test_auth_settings_default_rate_limit_protects_credential_endpoints() -> None:

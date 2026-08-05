@@ -319,7 +319,7 @@
 - 修改：`backend/tests/integration/conftest.py`
 - 修改：`progress.md`、`task_plan.md`
 
-- [ ] **Step 1: 助手写服务层 Red 测试。**
+- [x] **Step 1: 助手写服务层 Red 测试。**
 
   使用 fake session/repository 与固定时钟验证事务规则，不使用真实 Cookie：
 
@@ -343,7 +343,7 @@
 
   增加测试：注册 email 规范化、重复邮箱拒绝、禁用用户拒绝、refresh 过期/已撤销拒绝、refresh 并发只有一次成功、logout 仅撤销当前 session。
 
-- [ ] **Step 2: 助手写 HTTP/API Red 测试。**
+- [x] **Step 2: 助手写 HTTP/API Red 测试。**
 
   集成测试通过真实 `homepilot_test` 与 `TestClient`/HTTPX ASGI client 验证：
 
@@ -361,7 +361,7 @@
 
   另写 `GET /me` 的 401/200、login 统一 401、refresh/logout 缺失或错误 CSRF 的 403、logout 后 refresh 401、`Secure` 配置变化、以及 Redis 达到阈值返回 429 的测试。测试数据通过 fixture 清理，禁止触碰业务库。使用 `caplog` 增加安全事件测试，确认事件只带 `event`、`result`、`user_id`、`session_id`、`request_id`、`failure_reason` 等脱敏键，且日志文本不包含密码、JWT、refresh token、Cookie 或 Authorization header。
 
-- [ ] **Step 3: 助手运行 Red 并检查失败属于缺失实现。**
+- [x] **Step 3: 助手运行 Red 并检查失败属于缺失实现。**
 
   在 `backend` 目录执行：
 
@@ -371,7 +371,7 @@
 
   预期失败于 service/router 尚不存在；如失败是测试库、Docker 或缺少用户配置，先修复环境问题并记录，不能把环境故障当作业务 Red。
 
-- [ ] **Step 4: 实现应用依赖与认证服务。**
+- [x] **Step 4: 实现应用依赖与认证服务。**
 
   `database.py` 增加缓存的 `get_database()` 与 `async def get_db_session() -> AsyncIterator[AsyncSession]`，将每次 HTTP 请求的 session 关闭责任放在 dependency。`redis.py` 提供 `get_redis()`，用 `redis.asyncio.from_url(settings.redis_url, decode_responses=True)` 创建客户端，并在 FastAPI lifespan 关闭。
 
@@ -388,7 +388,7 @@
 
   `refresh()` 用 `SELECT ... FOR UPDATE` 读取 refresh token 哈希对应的 session，并在一个 commit 内填入旧 `revoked_at`/`revoked_reason="rotated"`、创建新 session、写回 `replaced_by_session_id`。任何失败必须 rollback；不记录原始 token。`AuthRateLimiter` 以 `INCR` + 首次 `EXPIRE` 实现固定窗口，Redis key 只保存 SHA-256 后的 IP/邮箱组合，不保存明文邮箱。`security_events.py` 只允许以下事件名：`auth.registered`、`auth.login_succeeded`、`auth.login_failed`、`auth.refresh_succeeded`、`auth.refresh_rejected`、`auth.logout`、`auth.user_inactive`、`tenancy.access_denied`；所有事件通过 `logger.info("security_event", extra={"security_event": payload})` 发出。
 
-- [ ] **Step 5: 实现 schema、路由和 Cookie 处理。**
+- [x] **Step 5: 实现 schema、路由和 Cookie 处理。**
 
   schema 最小结构：
 
@@ -409,7 +409,7 @@
 
   每次成功注册/登录/refresh 调用同一个 `set_auth_cookies(response, refresh_token, csrf_token, settings)`；它设置 refresh 的 `httponly=True` 和 CSRF 的 `httponly=False`，两者 `samesite="lax"`、相同 path 和配置化 secure。`require_csrf()` 只在 cookie/header 都存在且 `csrf_tokens_match` 时通过。认证失败响应固定为 `{"detail": "Invalid credentials"}`，不含底层异常。`main.py` 用 `CORSMiddleware` 挂载明确 origins、`allow_credentials=True`，并挂载 `api_v1_prefix` 下的 auth router。
 
-- [ ] **Step 6: 用户执行 Green、数据库迁移和小型后端回归。**
+- [x] **Step 6: 用户执行 Green、数据库迁移和小型后端回归。**
 
   在 **`D:\Project\Codex\vibe-coding\backend`** 执行：
 

@@ -200,15 +200,19 @@
 - 新建：`backend/app/modules/merchants/__init__.py`
 - 新建：`backend/app/modules/merchants/models.py`
 - 新建：`backend/app/shared/models/tenant.py`
+- 新建：`backend/app/shared/models/utc_datetime.py`
 - 修改：`backend/app/shared/models/__init__.py`
 - 修改：`backend/alembic/env.py`
 - 新建：`backend/alembic/versions/20260805_0002_identity_and_tenancy.py`
 - 新建：`backend/tests/unit/test_identity_models.py`
+- 新建：`backend/tests/unit/test_utc_datetime.py`
 - 新建：`backend/tests/integration/test_identity_migration.py`
 - 修改：`backend/tests/integration/conftest.py`
 - 修改：`progress.md`、`task_plan.md`
 
-- [ ] **Step 1: 助手写模型和迁移的 Red 测试。**
+> **已批准架构补充（2026-08-05）：** MySQL `DATETIME` 不持久化时区。Task 2 先按 `docs/adr/0002-utc-datetime-persistence.md` 实现 `UTCDateTime` 与 `utc_now()`：领域层只使用 aware UTC，写入时转换为 UTC-naive，读取时恢复 aware UTC，拒绝 naive 输入；共享时间戳使用 Python 默认值，不依赖 MySQL `CURRENT_TIMESTAMP`。该补充不新增依赖，作为本 Task 的一部分随同提交。
+
+- [x] **Step 1: 助手写模型和迁移的 Red 测试。**
 
   `test_identity_models.py` 断言以下结构存在且约束可表达：
 
@@ -224,7 +228,7 @@
 
   集成测试先 `downgrade base → upgrade head`，再检查四张表和关键索引：`users.email` 唯一、`merchant_members(user_id, merchant_id)` 唯一、`auth_sessions.refresh_token_hash` 唯一、`auth_sessions.user_id` 索引。
 
-- [ ] **Step 2: 助手运行 Red。**
+- [x] **Step 2: 助手运行 Red。**
 
   在 `backend` 目录执行：
 
@@ -234,7 +238,7 @@
 
   预期因领域模型和 revision `20260805_0002` 尚不存在而失败；助手记录精确失败，不要求用户执行。
 
-- [ ] **Step 3: 实现 ORM 模型。**
+- [x] **Step 3: 实现 ORM 模型。**
 
   使用 `Mapped` 和 `mapped_column`，所有 ID 首版使用自增整数；模型最小定义必须满足：
 
@@ -264,7 +268,7 @@
 
   `Merchant` 至少含 `id`、`name`、`is_active`；`MerchantMember` 含 `id`、`user_id`、`merchant_id`、`role`、`is_active` 及联合唯一约束。`MerchantMember` 继承 `MerchantOwnedMixin`，该 mixin 只声明 `merchant_id: Mapped[int]`，让后续每个商家资源可加入同一 Session 二次过滤。为 `created_at`/`updated_at` 建立一个明确的可复用 mixin，不能把时间戳复制到四个模型。将模型导入 Alembic metadata 加载路径，确保自动/运行迁移都能发现表。
 
-- [ ] **Step 4: 编写可逆迁移。**
+- [x] **Step 4: 编写可逆迁移。**
 
   revision `20260805_0002` 的 `upgrade()` 依次创建 `users`、`merchants`、`merchant_members`、`auth_sessions`，外键引用已创建表；`downgrade()` 必须按反向依赖顺序删除 `auth_sessions`、`merchant_members`、`merchants`、`users`。使用已存在的命名约定生成约束名，不手写数据库方言专属名称。
 

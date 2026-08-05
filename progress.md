@@ -18,6 +18,13 @@
 
 ## 2026-08-05
 
+- 认证安全原语 PR 已合并；已从更新后的 `main` 创建 `feat/identity-tenancy-models`，进入 Task 2。
+- Task 2 采用纵向 TDD 建立 `User`、`Merchant`、`MerchantMember` 与 `AuthSession`。已验证商家成员联合唯一、`OWNER/STAFF` 角色、refresh token 仅保存哈希、用户/租户/轮换链路外键、关键索引及严格反向迁移。
+- 迁移测试曾因开发中扩展未提交 revision `20260805_0002` 而保留不完整 head 状态；已重建隔离库并改造 fixture，使每次测试结束后回滚到 `base` 且断言领域表已清理，后续修改同一未提交 revision 不再污染测试库。
+- 两轮独立审查关闭了显式 email 唯一索引、模型/迁移时间类型对齐、外键/角色/Mixin/回滚测试覆盖等问题。
+- 审查发现 MySQL `DATETIME` 不保留时区；用户确认 ADR-0002 的 `UTCDateTime` 方案。实现已覆盖 aware 值归一化、naive 输入拒绝、真实 MySQL UTC+08:00 round-trip 与数据库拒绝非法成员角色。
+- 最新助手验证：`uv run pytest -q` 为 `41 passed`（保留既有 Starlette TestClient 废弃警告），`uv run ruff check .` 通过，`alembic check` 输出 `No new upgrade operations detected.`。等待用户执行业务库迁移与最终 Green 回归后提交本 Task 的独立 PR。
+
 - 用户确认认证运行时依赖并完成 `uv sync --all-groups`；锁文件固定 `argon2-cffi 25.1.0`、`email-validator 2.3.0` 和 `PyJWT 2.13.0`。
 - 认证配置与安全原语按垂直 TDD 完成：Argon2 密码哈希、HS256 access JWT、opaque refresh/CSRF token、CSRF 常量时间比较、JWT 篡改/类型拒绝、精确 CORS、Cookie 安全开关、时长边界、Redis 地址和限流配置。
 - 用户已在本地 `.env` 设置 `AUTH_JWT_SECRET`；助手未读取该值。`.env.example` 仅含安全占位符和开发默认值。

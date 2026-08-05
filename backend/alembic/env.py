@@ -6,6 +6,8 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 from app.core.config import get_settings
+from app.modules.identity import models as identity_models  # noqa: F401
+from app.modules.merchants import models as merchant_models  # noqa: F401
 from app.shared.models.base import Base
 
 config = context.config

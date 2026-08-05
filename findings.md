@@ -20,6 +20,7 @@
 - Agent：LangChain、LangGraph、LangSmith；DeepSeek OpenAI-compatible API，默认 `deepseek-v4-flash`。
 - RAG：Qdrant、bge-m3、reranker、MinIO；本地 Embedding/Reranker 与远程 SiliconFlow Provider 通过配置切换。
 - 密钥：全部来自未提交的 `.env`；只提交 `.env.example`。
+- 认证：采用短期 JWT access token 与 rotating opaque refresh token；refresh token 仅保存于 HttpOnly Cookie，数据库仅保存其哈希与撤销状态。商家授权不写入 JWT，必须由 `MerchantMember` 实时构造租户上下文。
 
 ## 待确认的兼容性事项
 

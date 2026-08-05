@@ -1,0 +1,1 @@
+"""Merchant tenancy persistence."""

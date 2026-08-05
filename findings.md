@@ -84,6 +84,14 @@
 - JWT 签名密钥只存在用户本地 `.env` 的 `AUTH_JWT_SECRET`，`.env.example` 只保留占位符；助手不读取或输出该密钥。
 - 当前配置明确拒绝带凭据 CORS 的 `*`，本地开发默认 `AUTH_COOKIE_SECURE=false`；生产上线时必须改为 HTTPS 下的 `true`，该提醒已写入总计划。
 
+## 身份数据模型与 UTC 时间发现（2026-08-05）
+
+- `20260805_0002` 在同一 MySQL 事务域内创建 `users`、`merchants`、`merchant_members` 与 `auth_sessions`；主/外键、关键索引、refresh 哈希唯一和角色约束均由真实 `homepilot_test` 迁移验证。
+- MySQL 会为唯一约束建立底层索引，但 SQLAlchemy ORM 仍应显式声明 `User.email` 的 `unique=True, index=True`，避免 metadata 与手写迁移漂移；迁移采用同名唯一索引。
+- 测试 fixture 必须在每次 `base → head` 验证后回滚到 `base` 并确认领域表删除。否则编辑尚未提交的 revision 后，持久 `homepilot_test` 的 `alembic_version` 可能与实际表不一致。
+- MySQL `DATETIME` 不保存时区。ADR-0002 规定 `UTCDateTime`：领域层只传递 aware UTC 时间，写入归一化为 UTC-naive，读取恢复 aware UTC；`TimestampMixin` 使用 Python `utc_now()`，不依赖数据库服务器时区。
+- 当前 Alembic `command.check` 在 MySQL 测试库上返回 `No new upgrade operations detected.`，说明 ORM metadata 与 revision 的物理 schema 一致。
+
 ## 错误记录
 
 | 时间 | 现象 | 处理 |
@@ -98,3 +106,6 @@
 | 2026-08-05 | Alembic 新目录导致 Ruff 将 `alembic` import 识别为项目本地分组 | 按 Ruff 的项目路径解析结果，将 SQLAlchemy 与 `alembic/app` 分组 |
 | 2026-08-05 | Codex 工具环境无法识别 `C:\\Program Files\\PowerShell\\7\\pwsh.exe` | 未进入项目验证脚本；改由工具当前 PowerShell 进程直接执行 ASCII 脚本 |
 | 2026-08-05 | 提交前审查发现测试库误配可能让回滚测试在业务库执行 DDL/DML | 增加 Python 与 Docker 双重安全闸门，并将拒绝分支加入自动化验证 |
+| 2026-08-05 | 修改未提交的 `20260805_0002` 后，测试库 migration head 与实际表不一致 | 一次性重建隔离库，并让每个迁移测试 teardown 回滚到 base 后断言领域表已删除 |
+| 2026-08-05 | PowerShell → Docker Compose → `sh -c` 的嵌套 SQL 引号两次解析失败 | 先在相同 PowerShell 环境以只读探针验证；需要临时传 SQL 时优先标准输入，避免多层嵌套引号 |
+| 2026-08-05 | MySQL `DATETIME` 读回 naive 时间，UTC+08:00 refresh 到期时间未归一化 | 用户确认 ADR-0002；使用 `UTCDateTime` 与真实 MySQL round-trip 测试固定 aware UTC 边界 |

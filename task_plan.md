@@ -9,15 +9,15 @@
 - 项目名称：HomePilot
 - 最近确认：用户已通过 uv 安装 Python 3.12；所有安装与 Git 命令由用户手动执行。
 - 最近确认：采用“稳定大版本 + 锁文件固定精确版本”的依赖策略。
-- 当前模块：认证配置与安全原语（TDD 实施中）。
-- 当前阻塞：无。
+- 当前模块：身份、商家与 refresh session 数据模型（Task 2，等待用户最终 Green 回归）。
+- 当前阻塞：无；业务库尚待用户升级至 revision `20260805_0002`。
 
 ## 阶段追踪
 
 | 阶段 | 目标 | 状态 | 验收结果 |
 |---|---|---|---|
 | 0 | 环境基线、依赖锁定、工程骨架与本地基础设施 | 已完成 | PR #1 已合并，全量回归通过 |
-| 1 | 身份、租户隔离、商家、店铺、商品与库存 | 进行中 | 数据库基础层与认证设计文档已合并；认证安全原语实施中 |
+| 1 | 身份、租户隔离、商家、店铺、商品与库存 | 进行中 | 数据库基础层、认证安全原语已合并；身份模型等待最终 Green 回归 |
 | 2 | 跨店购物车、订单、库存预占与模拟支付 | 未开始 | — |
 | 3 | 售后策略版本、规则引擎、售后状态机 | 未开始 | — |
 | 4 | 知识版本、异步索引、RAG 与跨店对比 | 未开始 | — |
@@ -51,14 +51,24 @@
 - [x] Regression：审查修复后后端 11 个测试、Ruff 及工程小型全量回归通过，复审无 Critical/Important。
 - [x] 完成 `feat/database-foundation` Commit 与 GitHub PR。
 
-## 当前模块：认证配置与安全原语
+## 已完成模块：认证配置与安全原语
 
 - [x] 用户确认后端认证依赖：`argon2-cffi`、`email-validator`、`PyJWT`，并完成 `uv sync --all-groups`。
 - [x] Red→Green：Argon2 密码哈希、access JWT、opaque refresh token、CSRF 双重提交比较与随机 CSRF token。
 - [x] Red→Green：CORS 精确白名单与通配符拒绝、Cookie 安全开关、access/refresh 有效期、Redis 限流地址与限流默认值。
 - [x] 补充篡改 JWT 和有效签名但 `typ != access` 的拒绝测试。
 - [x] 执行本模块完整单元回归、后端全量回归与 Ruff：认证定向 16 passed，后端全量 26 passed，Ruff 通过。
-- [ ] 更新进度/发现记录并完成 `feat(auth): add security configuration and token primitives` Commit 与 GitHub PR。
+- [x] 完成 `feat(auth): add security configuration and token primitives` Commit 与 GitHub PR，并已合并至 `main`。
+
+## 当前模块：身份、商家与 refresh session 数据模型（Task 2）
+
+- [x] Red→Green：`User`、`Merchant`、`MerchantMember`、`AuthSession` ORM；商家成员联合唯一、refresh token 仅保存哈希、角色枚举、共享租户/审计 Mixin。
+- [x] Red→Green：revision `20260805_0002` 正向创建四张表、关键唯一/查询索引、外键与角色约束；反向按依赖顺序删除。
+- [x] 测试库迁移 fixture 在每次测试后回滚至 `base` 并断言四张领域表已删除，避免未提交迁移演进污染持久测试库。
+- [x] 架构修订：采用 ADR-0002 的 `UTCDateTime`；MySQL 存 UTC-naive，应用层读写 aware UTC，拒绝 naive 输入，不依赖数据库服务器时区。
+- [x] 助手验证：后端全量 `41 passed`、Ruff 通过、Alembic metadata 检查无新增操作。
+- [ ] 用户执行业务库迁移与最终 Green 回归。
+- [ ] 用户完成 `feat(identity): add users merchants and auth sessions` Commit 与 GitHub PR。
 
 ## 更新约定
 

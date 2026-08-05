@@ -70,6 +70,19 @@
 
 单次 refresh 时必须在同一数据库事务中锁定旧 `AuthSession`、判断其未撤销且未过期、撤销旧会话并创建新会话。并发或重放的旧 token 只会得到未认证响应，不能再次产生新 token。
 
+### 3.4 UTC 时间持久化边界
+
+应用层所有领域时间均使用带 `UTC` 时区的 `datetime`。MySQL 的 `DATETIME` 不保留时区，因此不能直接依赖 `DateTime(timezone=True)`：数据库读回的 naive 时间若与 `datetime.now(UTC)` 比较，会导致运行时错误或产生隐性时区偏差。
+
+统一使用共享的 `UTCDateTime` SQLAlchemy 类型：
+
+1. 绑定参数时拒绝 naive datetime，将任意 aware datetime 归一化为 UTC 后以 UTC-naive `DATETIME` 写入 MySQL。
+2. 读取结果时将 MySQL 的 naive `DATETIME` 重新标记为 UTC-aware datetime。
+3. `created_at`、`updated_at` 的 Python 默认值与更新值由统一 `utc_now()` 生成，不依赖 MySQL 服务器本地时区或 `CURRENT_TIMESTAMP` 默认值。
+4. 迁移层保持 MySQL 物理 `DATETIME`，不伪造数据库具备时区存储能力。
+
+`AuthSession.expires_at`、`revoked_at` 和所有共享审计时间均遵守此边界。测试必须覆盖 UTC+08:00 写入后以 UTC 读回、naive 输入被拒绝，以及真实 MySQL round-trip 后可与 `datetime.now(UTC)` 安全比较。
+
 ## 4. 认证令牌、Cookie 与 CSRF
 
 ### 4.1 Access token

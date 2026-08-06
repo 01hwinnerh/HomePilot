@@ -30,6 +30,12 @@
 
 ## 2026-08-06
 
+- Task 5 第一小模块已实现：新增无 React 依赖的 `@homepilot/auth-client`，统一封装 register/login/refresh/logout/me、HttpOnly Cookie 凭据、CSRF 请求头和安全 API 错误。
+- 按 TDD 先写 refresh/logout Cookie+CSRF 行为测试；初次运行因新 workspace 包尚未建立依赖链接而无法找到 `vitest`，不是业务测试失败。用户执行普通 `pnpm install` 后已恢复测试环境。
+- auth-client 内部验证通过：2 个 Vitest 测试、TypeScript build、ESLint lint 均通过。发现并修正新包 TypeScript 未配置 `skipLibCheck`/`ESNext` 导致的第三方声明类型错误。
+- 当前暂停在 auth-client 小模块边界，等待用户确认后再进入 Storefront Zustand 内存会话状态；尚未开始商城 UI。
+- 已新增根目录 `HANDOFF.md` 作为恢复开发的显式入口，并在 `AGENTS.md`、`README.md` 中强制/醒目链接；详细交接内容保留在 `docs/handover/2026-08-06-homepilot-handoff.md`。两份文档记录当前已合并能力、auth-client 未提交状态、验证结果、待修订计划项、下一小模块设计选项、协作方式和安全红线。
+
 - Task 3 已合并并同步到干净的 `main`；用户创建 `feat/tenant-context` 后进入 Task 4。
 - Task 4 完成首轮 Red→Green：Principal 从服务端 active User 构造、TenantContext 从 active membership/merchant 构造、Tenant/Platform Repository 边界、SQLAlchemy tenant scope 过滤与 FastAPI 认证依赖。
 - 集成测试使用真实 `homepilot_test` 验证商家 A 不能建立商家 B Context，且在 tenant scope 内直接 ORM 查询和 Repository 查询都无法读到商家 B 的成员资源；平台管理员独立 Repository 可跨商家列出商家。

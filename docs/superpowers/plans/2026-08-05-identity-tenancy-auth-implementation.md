@@ -560,10 +560,14 @@
 - 新建：`frontend/apps/storefront/src/auth/StorefrontAuthPanel.tsx`
 - 新建：`frontend/apps/storefront/src/auth/StorefrontAuthPanel.test.tsx`
 - 修改：`frontend/apps/storefront/src/styles.css`
-- 修改：`frontend/pnpm-lock.yaml`（只由用户执行 `pnpm install --lockfile-only` 生成）
+- 修改：`frontend/pnpm-lock.yaml`（由用户执行普通 `pnpm install` 更新并建立新 workspace 包的依赖链接）
 - 修改：`progress.md`、`task_plan.md`
 
-- [ ] **Step 1: 助手写 auth client 和商城 Red 测试。**
+- [x] **Step 1a: 助手写并验证 auth client。**
+
+  已新增无 React 依赖的 `@homepilot/auth-client`，并用 fake `fetch` 验证 refresh/logout 显式携带 credentials 与 CSRF header。其 2 个 Vitest 测试、TypeScript build 与 ESLint lint 已通过。后端真实字段名为 `memberships`，不是早期草案中的 `merchant_memberships`。
+
+- [ ] **Step 1b: 助手写 Storefront Red 测试。**
 
   auth-client 的测试用 fake `fetch` 验证 refresh/logout 显式使用 credentials 和 CSRF header：
 
@@ -577,7 +581,7 @@
 
   Storefront 测试使用 `@testing-library/react` 和 jsdom 验证：未登录显示“登录/注册”；注册成功显示返回的邮箱；应用初始化调用 `refresh()`；退出后清除 Zustand 内存 token。测试不读取或写入 `localStorage`。
 
-- [ ] **Step 2: 助手运行 Red。**
+- [ ] **Step 2: 助手运行 Storefront Red。**
 
   在 `frontend` 目录执行：
 
@@ -586,14 +590,14 @@
   pnpm --filter @homepilot/storefront test
   ```
 
-  预期因 workspace package、auth store 和组件不存在而失败；由助手诊断，不要求用户手动执行。
+  预期因 auth store 和组件不存在而失败；由助手诊断，不要求用户手动执行。
 
 - [ ] **Step 3: 实现共享 client。**
 
   `@homepilot/auth-client` 只封装契约，不耦合 React：
 
   ```ts
-  export type AuthUser = { id: number; email: string; is_platform_admin: boolean; merchant_memberships: MerchantMembership[] };
+  export type AuthUser = { id: number; email: string; is_platform_admin: boolean; memberships: MerchantMembership[] };
   export type AuthResponse = { access_token: string; token_type: "bearer"; user: AuthUser };
 
   export class AuthClient {
@@ -643,19 +647,19 @@
 
   `StorefrontAuthPanel` 提供邮箱、密码、登录/注册切换、提交中状态、后端安全错误文案、登录后邮箱和退出按钮。入口组件首次渲染调用 `restoreSession()`；刷新失败只进入 anonymous，不显示 token 相关错误。应用 package 加入 `"@homepilot/auth-client": "workspace:*"`、`"@testing-library/react": ">=16 <17"` 和 `"jsdom": ">=26 <28"`；共享 package 的 exports 指向 `src/index.ts` 并通过自身 `tsc --noEmit`、Vitest、ESLint 脚本参与根 workspace 校验。Storefront 的 `vite.config.ts` 将 `test.environment` 设为 `"jsdom"`。
 
-- [ ] **Step 5: 用户更新前端锁文件并执行 Green。**
+- [ ] **Step 5: 用户更新前端依赖链接并执行 Green。**
 
   在 **`D:\Project\Codex\vibe-coding\frontend`** 执行：
 
   ```powershell
-  pnpm install --lockfile-only
+  pnpm install
   pnpm --filter @homepilot/auth-client test
   pnpm --filter @homepilot/storefront test
   pnpm --filter @homepilot/storefront build
   pnpm --filter @homepilot/storefront lint
   ```
 
-  第一个命令只根据 package manifest 更新 workspace lockfile，不安装新的第三方运行库；其余命令验证共享 client、商城表单、类型构建和静态检查。预期全部通过。
+  第一个命令按已确认版本同步 workspace lockfile，并为新包建立本地可执行依赖链接；其余命令验证共享 client、商城表单、类型构建和静态检查。预期全部通过。
 
 - [ ] **Step 6: 用户提交商城登录 Commit/PR。**
 
@@ -706,14 +710,14 @@
 
 - [ ] **Step 3: 实现控制台最小闭环。**
 
-  Console 的 store 复用 Task 5 的状态结构和 `AuthClient`，不复制 HTTP/CSRF 实现。`ConsoleAuthPanel` 只提供登录，成功后调用 `/me` 的数据展示当前邮箱、平台身份和 `merchant_memberships`。无商家关系的普通顾客可登录但显示“当前没有控制台访问权限”，不伪造商家入口。退出后回到登录面板。Console package 加入 `"@homepilot/auth-client": "workspace:*"`、`"@testing-library/react": ">=16 <17"` 和 `"jsdom": ">=26 <28"`，并在 `vite.config.ts` 把 Vitest 环境设为 `"jsdom"`。
+  Console 的 store 复用 Task 5 的状态结构和 `AuthClient`，不复制 HTTP/CSRF 实现。`ConsoleAuthPanel` 只提供登录，成功后调用 `/me` 的数据展示当前邮箱、平台身份和 `memberships`。无商家关系的普通顾客可登录但显示“当前没有控制台访问权限”，不伪造商家入口。退出后回到登录面板。Console package 加入 `"@homepilot/auth-client": "workspace:*"`、`"@testing-library/react": ">=16 <17"` 和 `"jsdom": ">=26 <28"`，并在 `vite.config.ts` 把 Vitest 环境设为 `"jsdom"`。
 
 - [ ] **Step 4: 用户更新锁文件并完成前端全量回归。**
 
   在 **`D:\Project\Codex\vibe-coding\frontend`** 执行：
 
   ```powershell
-  pnpm install --lockfile-only
+  pnpm install
   pnpm run test
   pnpm run build
   pnpm run lint

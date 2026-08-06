@@ -9,15 +9,15 @@
 - 项目名称：HomePilot
 - 最近确认：用户已通过 uv 安装 Python 3.12；所有安装与 Git 命令由用户手动执行。
 - 最近确认：采用“稳定大版本 + 锁文件固定精确版本”的依赖策略。
-- 当前模块：Principal、TenantContext 与 Repository 硬隔离（Task 4，等待集中最终验收）。
-- 当前阻塞：无；本模块不新增依赖或 Alembic migration。
+- 当前模块：Task 5 共享前端 auth-client（第一小模块已完成，等待用户小模块验收）。
+- 当前阻塞：无；auth-client 不新增运行时依赖，前端 workspace 依赖链接已由用户手动安装完成。
 
 ## 阶段追踪
 
 | 阶段 | 目标 | 状态 | 验收结果 |
 |---|---|---|---|
 | 0 | 环境基线、依赖锁定、工程骨架与本地基础设施 | 已完成 | PR #1 已合并，全量回归通过 |
-| 1 | 身份、租户隔离、商家、店铺、商品与库存 | 进行中 | 认证 API 已合并；租户硬隔离等待最终验收 |
+| 1 | 身份、租户隔离、商家、店铺、商品与库存 | 进行中 | 认证与租户基础已完成，正在接入前端认证闭环 |
 | 2 | 跨店购物车、订单、库存预占与模拟支付 | 未开始 | — |
 | 3 | 售后策略版本、规则引擎、售后状态机 | 未开始 | — |
 | 4 | 知识版本、异步索引、RAG 与跨店对比 | 未开始 | — |
@@ -81,7 +81,15 @@
 - [x] 用户执行业务库迁移、认证定向回归、后端全量回归和 Ruff；复核修订后的全量测试为 56 passed，Ruff 通过。
 - [x] 用户完成 `feat(auth): add rotating session authentication API` Commit 与 GitHub PR，已合并至 `main`。
 
-## 当前模块：Principal、TenantContext 与 Repository 硬隔离（Task 4）
+## 当前模块：Storefront auth-client（Task 5 第一小模块）
+
+- [x] 共享包 `@homepilot/auth-client`：认证类型、register/login/refresh/logout/me、Cookie/CSRF 和错误契约。
+- [x] auth-client 行为测试、TypeScript build 与 lint 已由助手验证通过。
+- [ ] 用户小模块验收后提交独立 Commit/PR。
+- [ ] Zustand 内存会话状态。
+- [ ] Storefront 登录/注册面板与页面恢复。
+
+## 已完成模块：Principal、TenantContext 与 Repository 硬隔离（Task 4）
 
 - [x] 审查修订：Principal/TenantContext 带内部 provenance capability；`tenant_scope`、TenantRepository 与 PlatformRepository 都拒绝普通参数手造的对象，避免后续 Agent/服务把不可信身份包装成授权上下文。
 - [x] Red→Green：仅由活跃 `MerchantMember` + 活跃 `Merchant` 构造的 `TenantContext`，跨商家构造一律拒绝。
@@ -90,7 +98,7 @@
 - [x] 复审加固：真实 MySQL 回归新增跨商家 bulk delete 拒绝、异常退出 reset、两个并发 asyncio Task 的独立 ContextVar 作用域；ADR 明确 capability 防止不可信业务参数误用，但不把拥有任意 Python 导入/执行权的同进程恶意代码当作可隔离主体。
 - [x] API 认证依赖从 access token 仅取得 user ID，再从数据库读取 active/platform 状态；`/me` 已复用该可信 Principal。
 - [x] 助手全量回归：`65 passed`，Ruff 通过；保留既有 Starlette 上游弃用警告。
-- [ ] 提交前独立审查、用户最终集中验收与 Commit/PR。
+- [x] 提交前独立审查、用户最终集中验收与 Commit/PR。
 
 ## 更新约定
 

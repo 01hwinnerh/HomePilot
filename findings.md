@@ -115,6 +115,12 @@
 - ContextVar 在同一 task 的异常退出由 context manager 的 `finally` 重置；不同 asyncio task 使用各自设置的 tenant scope 时保持独立。本模块没有在 tenant scope 内创建后台 task，后续异步 worker 必须重新从受控输入构造上下文，不能复制 Web 请求 ContextVar。
 - provenance capability 是减少错误调用面的服务端内部机制，不是 Python 进程内的安全沙箱。任何能任意导入私有模块并运行代码的主体已拥有服务端执行权；Agent 工具层的实际安全要求仍是只接受闭包注入的 context，绝不接受前端/模型字段构造 context。
 
+## Storefront auth-client 发现（2026-08-06）
+
+- 共享认证客户端不依赖 React，商城和控制台均通过同一 HTTP/CSRF 契约，access token 只由上层以内存状态持有。
+- `pnpm install --lockfile-only` 能更新 importer，但不会建立新 workspace 包的可执行依赖链接；新包首次测试因此出现 `vitest not found`。普通 `pnpm install` 后测试命令正常。
+- auth-client 的 TypeScript 检查必须启用 `skipLibCheck`，并使用 `ESNext` 标准库类型；否则 Vitest/Vite 声明文件会暴露 Node disposable 类型错误。该配置只作用于共享包，不放宽业务源码的 `strict` 检查。
+
 ## 错误记录
 
 | 时间 | 现象 | 处理 |

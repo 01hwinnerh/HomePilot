@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+    "strict": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": true
+  },
+  "include": ["src"]
+}

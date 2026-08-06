@@ -15,12 +15,14 @@ HomePilot 同时面向顾客、商家成员、平台管理员以及后续的 Age
 4. JWT 不保存 `merchant_id`、商家角色或可访问商家列表。每个商家请求都从数据库中的活跃 `MerchantMember` 关系构建 `TenantContext`。
 5. 普通跨商家隔离由显式 `TenantContext` Repository 参数与 SQLAlchemy 租户过滤双重保证。平台跨租户查询只能经独立 `PlatformRepository`，并要求平台管理员身份。
 6. 顾客可自助注册；商家成员和平台管理员首版只通过种子数据创建。
+7. `Principal` 与 `TenantContext` 带有仅由身份依赖/领域工厂签发的内部 provenance capability。普通 Repository、平台 Repository 与 `tenant_scope` 都拒绝未签发对象；这用于防止后续 Agent 或服务把不可信 user/merchant/role 参数直接包装成授权上下文。Python 进程内可任意导入项目私有符号的恶意代码属于已拥有服务端执行权的可信代码，不是该 capability 可隔离的威胁主体；后续 Agent 工具不得暴露 issuer/capability，只能闭包注入已验证的 Principal/TenantContext。
+8. 在 tenant scope 中，SQLAlchemy 的 `with_loader_criteria` 同时应用于 ORM `SELECT`、bulk `UPDATE` 与 bulk `DELETE`。业务写操作仍必须经 TenantRepository 显式带 merchant 条件；scope 过滤是遗漏条件时的第二道保护，而不是跨租户 bulk DML 的授权入口。
 
 ## 后果
 
 优点：refresh token 可以撤销，前端刷新可恢复会话，模型和前端都无法把不可信的 tenant ID 变成授权结论，且安全边界便于独立测试。
 
-代价：需要维护 `AuthSession`、Cookie/CSRF 处理和 refresh rotation 的并发测试。用户启用状态、商家成员关系和平台管理员权限由服务端在受保护请求中查询，因此这类授权变化不依赖 access token 过期才能生效。实现阶段必须把 JWT 与密码哈希库声明为后端直接依赖，不能依赖传递安装。
+代价：需要维护 `AuthSession`、Cookie/CSRF 处理和 refresh rotation 的并发测试，也需要为 Principal/TenantContext 的来源、scope reset 与 scoped bulk DML 建立回归测试。用户启用状态、商家成员关系和平台管理员权限由服务端在受保护请求中查询，因此这类授权变化不依赖 access token 过期才能生效。实现阶段必须把 JWT 与密码哈希库声明为后端直接依赖，不能依赖传递安装。
 
 ## 不采用的方案
 

@@ -28,6 +28,16 @@
 - 用户已执行审查修订后的业务库迁移、认证定向回归、全量 pytest 与 Ruff；结果均达到预期，全量为 56 passed。当前仅等待复审确认与 Task 3 的独立 Commit/PR。
 - 第二轮复审未发现 Critical；补齐剩余日志脱敏测试缺口及两项小型回归后，等待最终全量验证。未新增依赖、迁移或外部配置项。
 
+## 2026-08-06
+
+- Task 3 已合并并同步到干净的 `main`；用户创建 `feat/tenant-context` 后进入 Task 4。
+- Task 4 完成首轮 Red→Green：Principal 从服务端 active User 构造、TenantContext 从 active membership/merchant 构造、Tenant/Platform Repository 边界、SQLAlchemy tenant scope 过滤与 FastAPI 认证依赖。
+- 集成测试使用真实 `homepilot_test` 验证商家 A 不能建立商家 B Context，且在 tenant scope 内直接 ORM 查询和 Repository 查询都无法读到商家 B 的成员资源；平台管理员独立 Repository 可跨商家列出商家。
+- 最新助手验证：后端 `63 passed`，`uv run ruff check .` 通过。等待独立复审后再请求用户进行一次集中最终验收。
+- 独立复审发现 3 个 Important：手造 Principal/Context、仅 SELECT 的 scope 过滤、以及依赖链测试不完整。已按 ADR-0001 修订：内部 provenance capability、scope DML 过滤、真实 Bearer→get_tenant_context→403 和 platform dependency 链路测试。定向回归通过，准备最终全量验证。
+- 第二轮复审确认无 Critical；补齐 scoped bulk delete、异常 scope reset 与并发 task ContextVar 隔离回归，并在 ADR 中准确记录 capability 的进程内威胁模型边界。等待最终全量验证与最终复审。
+- 修订后最终助手验证：`uv run pytest -q` 为 65 passed，`uv run ruff check .` 通过；保留既有 Starlette TestClient 上游弃用警告。
+
 - 认证安全原语 PR 已合并；已从更新后的 `main` 创建 `feat/identity-tenancy-models`，进入 Task 2。
 - Task 2 采用纵向 TDD 建立 `User`、`Merchant`、`MerchantMember` 与 `AuthSession`。已验证商家成员联合唯一、`OWNER/STAFF` 角色、refresh token 仅保存哈希、用户/租户/轮换链路外键、关键索引及严格反向迁移。
 - 迁移测试曾因开发中扩展未提交 revision `20260805_0002` 而保留不完整 head 状态；已重建隔离库并改造 fixture，使每次测试结束后回滚到 `base` 且断言领域表已清理，后续修改同一未提交 revision 不再污染测试库。

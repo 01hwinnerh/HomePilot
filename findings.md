@@ -104,6 +104,17 @@
 - `/me` 按身份规格返回活动商家成员关系（`merchant_id`、`merchant_name`、`OWNER/STAFF`）；仅返回成员与商家均为启用状态的记录。它是展示信息，不能替代后续 TenantContext 的逐请求授权查询。
 - 第二轮复审要求将安全日志验收从“仅不记录密码”提升为字段白名单保护。现有回归锁定 `security_event` payload 只能有 event/result/user_id/session_id/request_id/failure_reason，且 caplog 中不得出现 JWT、refresh/CSRF、Cookie 或 Authorization 的可识别值。
 
+## 租户上下文与硬隔离发现（2026-08-06）
+
+- access JWT 仍然只表达用户 ID；`Principal.is_platform_admin` 每次从 active `User` 记录读取，避免 JWT 中过期的角色事实成为授权依据。
+- `TenantContext` 只能由 `TenantContextFactory` 查询活跃 membership 与活跃 merchant 后生成。它不是前端、URL 参数或 Agent 工具参数可直接信任的数据。
+- `TenantRepository` 的显式 `merchant_id` 条件是第一道防线；`tenant_scope` 通过 SQLAlchemy `with_loader_criteria(MerchantOwnedMixin, ...)` 注入的条件是第二道防线。真实 MySQL 集成测试同时验证了 Repository 和直接 ORM 查询的跨商家拒绝。
+- 平台跨商家查询不复用 TenantRepository 的 bypass 参数，而是独立的 `PlatformMerchantRepository`，构造时就拒绝非平台 Principal。
+- 审查指出 frozen dataclass 只能防止字段修改，不能阻止内部代码重新实例化。因此本模块额外使用仅由身份依赖/工厂签发的 provenance capability；正常业务、Agent 工具和 Repository 不能仅凭 user_id、merchant_id 或 `is_platform_admin=True` 构造可用授权上下文。
+- `with_loader_criteria` 不能仅用于 SELECT：在 `do_orm_execute` 中也要覆盖 ORM bulk UPDATE/DELETE，否则后续遗漏 merchant 条件的批量写可能跨租户。集成回归断言 scoped update 商家 B 记录的 rowcount 为 0，scope 退出后查询恢复正常。
+- ContextVar 在同一 task 的异常退出由 context manager 的 `finally` 重置；不同 asyncio task 使用各自设置的 tenant scope 时保持独立。本模块没有在 tenant scope 内创建后台 task，后续异步 worker 必须重新从受控输入构造上下文，不能复制 Web 请求 ContextVar。
+- provenance capability 是减少错误调用面的服务端内部机制，不是 Python 进程内的安全沙箱。任何能任意导入私有模块并运行代码的主体已拥有服务端执行权；Agent 工具层的实际安全要求仍是只接受闭包注入的 context，绝不接受前端/模型字段构造 context。
+
 ## 错误记录
 
 | 时间 | 现象 | 处理 |

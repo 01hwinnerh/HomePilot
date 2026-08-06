@@ -452,7 +452,7 @@
 - 新建：`backend/tests/integration/test_tenant_isolation.py`
 - 修改：`progress.md`、`task_plan.md`
 
-- [ ] **Step 1: 助手写越权 Red 测试。**
+- [x] **Step 1: 助手写越权 Red 测试。**
 
   用商家 A/B、成员 A、成员 B 和平台管理员建立数据，验证如下断言：
 
@@ -474,7 +474,7 @@
 
   集成测试不得靠“前端隐藏按钮”证明安全性，而应直接验证商家 A 的认证 token 无法获取商家 B 的 `TenantContext`，且平台管理员在普通 tenant repository 中也没有 bypass 方法。
 
-- [ ] **Step 2: 助手运行 Red。**
+- [x] **Step 2: 助手运行 Red。**
 
   在 `backend` 目录执行：
 
@@ -484,7 +484,9 @@
 
   预期因 tenancy 模块和 dependencies 不存在而失败；由助手记录。
 
-- [ ] **Step 3: 实现上下文和 Repository 边界。**
+- [x] **Step 3: 实现上下文和 Repository 边界。**
+
+> **审查修订（2026-08-06）：** Principal/TenantContext 不能只依赖 frozen dataclass 约束。它们由身份依赖与 membership factory 写入内部 provenance capability，`tenant_scope`、TenantRepository 与 PlatformRepository 会拒绝未签发对象。SQLAlchemy 第二道 `with_loader_criteria` 同时覆盖 scoped ORM 的 `SELECT`、bulk `UPDATE` 与 bulk `DELETE`；显式 Repository 条件仍为第一道防线。
 
   `context.py` 定义不可变数据类型：
 

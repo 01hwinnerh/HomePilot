@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from app.core.config import get_settings
+from app.shared.tenancy import session as tenancy_session  # noqa: F401
 
 
 class UnsafeTestDatabaseError(ValueError):

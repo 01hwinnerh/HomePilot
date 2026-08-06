@@ -9,15 +9,15 @@
 - 项目名称：HomePilot
 - 最近确认：用户已通过 uv 安装 Python 3.12；所有安装与 Git 命令由用户手动执行。
 - 最近确认：采用“稳定大版本 + 锁文件固定精确版本”的依赖策略。
-- 当前模块：认证服务、Cookie/CSRF API 与 Redis 限流（Task 3，等待用户最终 Green 回归）。
-- 当前阻塞：无；业务库须升级至 revision `20260805_0002` 后验证认证 API。
+- 当前模块：Principal、TenantContext 与 Repository 硬隔离（Task 4，等待集中最终验收）。
+- 当前阻塞：无；本模块不新增依赖或 Alembic migration。
 
 ## 阶段追踪
 
 | 阶段 | 目标 | 状态 | 验收结果 |
 |---|---|---|---|
 | 0 | 环境基线、依赖锁定、工程骨架与本地基础设施 | 已完成 | PR #1 已合并，全量回归通过 |
-| 1 | 身份、租户隔离、商家、店铺、商品与库存 | 进行中 | 身份模型已合并；认证 API 等待最终 Green 回归 |
+| 1 | 身份、租户隔离、商家、店铺、商品与库存 | 进行中 | 认证 API 已合并；租户硬隔离等待最终验收 |
 | 2 | 跨店购物车、订单、库存预占与模拟支付 | 未开始 | — |
 | 3 | 售后策略版本、规则引擎、售后状态机 | 未开始 | — |
 | 4 | 知识版本、异步索引、RAG 与跨店对比 | 未开始 | — |
@@ -70,7 +70,7 @@
 - [x] 用户执行业务库迁移与最终 Green 回归。
 - [x] 用户完成 `feat(identity): add users merchants and auth sessions` Commit 与 GitHub PR，已合并。
 
-## 当前模块：认证服务、Cookie/CSRF API 与 Redis 限流（Task 3）
+## 已完成模块：认证服务、Cookie/CSRF API 与 Redis 限流（Task 3）
 
 - [x] Red→Green：`AuthService` 完成注册、统一登录失败、refresh rotation、用户有效性校验和当前用户查询；refresh 原文始终不写入数据库或日志。
 - [x] Red→Green：FastAPI `register/login/refresh/logout/me`、精确 CORS、HttpOnly refresh Cookie、双重提交 CSRF 和 Cookie 清理。
@@ -79,7 +79,18 @@
 - [x] 提交前独立审查修复：refresh 限流按 refresh token 哈希分桶，不再让同一 IP 的不同用户共用配额；拒绝/幂等路径显式 rollback；`/me` 返回启用商家成员关系；补足停用/过期、Cookie 属性和安全日志脱敏回归。
 - [x] 复审加固：安全事件 payload 锁定为六个允许字段，回归检查不出现密码/JWT/refresh/CSRF/Cookie/Authorization 字符串；同 IP 不同 refresh session 使用不同限流 bucket；logout 缺失 CSRF 明确拒绝。
 - [x] 用户执行业务库迁移、认证定向回归、后端全量回归和 Ruff；复核修订后的全量测试为 56 passed，Ruff 通过。
-- [ ] 用户完成 `feat(auth): add rotating session authentication API` Commit 与 GitHub PR。
+- [x] 用户完成 `feat(auth): add rotating session authentication API` Commit 与 GitHub PR，已合并至 `main`。
+
+## 当前模块：Principal、TenantContext 与 Repository 硬隔离（Task 4）
+
+- [x] 审查修订：Principal/TenantContext 带内部 provenance capability；`tenant_scope`、TenantRepository 与 PlatformRepository 都拒绝普通参数手造的对象，避免后续 Agent/服务把不可信身份包装成授权上下文。
+- [x] Red→Green：仅由活跃 `MerchantMember` + 活跃 `Merchant` 构造的 `TenantContext`，跨商家构造一律拒绝。
+- [x] Red→Green：普通 `TenantRepository` 强制携带 TenantContext 与显式 merchant 条件；`PlatformMerchantRepository` 只接受平台管理员 Principal。
+- [x] Red→Green：`tenant_scope` 通过 SQLAlchemy `with_loader_criteria` 为所有 MerchantOwned ORM `SELECT`、bulk `UPDATE`、bulk `DELETE` 追加第二道过滤；真实 MySQL 测试验证直接查询和跨商家 bulk update 都无法绕过，且 scope 退出后不会泄漏。
+- [x] 复审加固：真实 MySQL 回归新增跨商家 bulk delete 拒绝、异常退出 reset、两个并发 asyncio Task 的独立 ContextVar 作用域；ADR 明确 capability 防止不可信业务参数误用，但不把拥有任意 Python 导入/执行权的同进程恶意代码当作可隔离主体。
+- [x] API 认证依赖从 access token 仅取得 user ID，再从数据库读取 active/platform 状态；`/me` 已复用该可信 Principal。
+- [x] 助手全量回归：`65 passed`，Ruff 通过；保留既有 Starlette 上游弃用警告。
+- [ ] 提交前独立审查、用户最终集中验收与 Commit/PR。
 
 ## 更新约定
 

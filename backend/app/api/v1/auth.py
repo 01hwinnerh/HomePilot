@@ -2,16 +2,14 @@ from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.v1.dependencies import get_current_principal
 from app.core.config import Settings, get_settings
 from app.core.database import get_db_session
 from app.core.redis import get_redis
 from app.core.security import (
-    InvalidAccessToken,
     csrf_tokens_match,
-    decode_access_token,
     hash_refresh_token,
 )
 from app.modules.identity.rate_limit import AuthRateLimiter, AuthRateLimitExceeded
@@ -29,11 +27,9 @@ from app.modules.identity.service import (
     InvalidCredentials,
     InvalidRefreshSession,
 )
+from app.shared.tenancy.context import Principal
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-bearer_scheme = HTTPBearer(auto_error=False)
-
-
 def get_auth_rate_limiter() -> AuthRateLimiter:
     """Build the request limiter from centralized settings and Redis client."""
 
@@ -233,20 +229,12 @@ async def logout(
 
 @router.get("/me", response_model=CurrentUserResponse)
 async def me(
-    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
+    principal: Annotated[Principal, Depends(get_current_principal)],
     db_session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> CurrentUserResponse:
-    if credentials is None:
-        raise _invalid_credentials()
     settings = get_settings()
-    try:
-        claims = decode_access_token(credentials.credentials, settings=settings)
-        service = AuthService(session=db_session, settings=settings)
-        user = await service.current_user(
-            user_id=claims.user_id
-        )
-    except (InvalidAccessToken, InvalidCredentials) as error:
-        raise _invalid_credentials() from error
+    service = AuthService(session=db_session, settings=settings)
+    user = await service.current_user(user_id=principal.user_id)
     memberships = await service.active_memberships(user_id=user.id)
     return CurrentUserResponse.model_validate(user).model_copy(
         update={

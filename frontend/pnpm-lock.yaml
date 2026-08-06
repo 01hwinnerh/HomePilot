@@ -54,6 +54,9 @@ importers:
 
   apps/storefront:
     dependencies:
+      '@homepilot/auth-client':
+        specifier: workspace:*
+        version: link:../../packages/auth-client
       '@tanstack/react-query':
         specifier: ^5.66.0
         version: 5.101.4(react@19.2.8)

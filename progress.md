@@ -39,7 +39,7 @@
 
 ## 2026-08-07
 
-- GitHub Actions 首次 PR 运行发现两个启动问题：pnpm 11.9 的干净安装拒绝 esbuild 脚本；MySQL 在全新 Runner 初始化时因 `set -u` 泄漏到官方 entrypoint 而退出。之后发现 auth-client 的 ESLint 未被自身 manifest 声明，导致干净 CI lint 找不到二进制。已改为 `allowBuilds: { esbuild: true }`、补齐 auth-client 的 `eslint: ^9.20.0`、移除初始化脚本的 nounset、增强测试库用户初始化，并增加 Compose 启动失败日志步骤。强制重建依赖时已看到 esbuild postinstall 成功；前端 frozen install/test/build/lint、后端 pytest/Ruff、脚本语法和 Compose config 本地复验通过；待推送修复后观察 CI。
+- GitHub Actions 首次 PR 运行发现两个启动问题：pnpm 11.9 的干净安装拒绝 esbuild 脚本；MySQL 在全新 Runner 初始化时因 `set -u` 泄漏到官方 entrypoint 而退出。之后发现 auth-client 的 ESLint 未被自身 manifest 声明，导致干净 CI lint 找不到二进制；再之后发现 health 测试硬编码 `development`，与 CI 正确的 `APP_ENV=test` 冲突。已改为 `allowBuilds: { esbuild: true }`、补齐 auth-client 的 `eslint: ^9.20.0`、移除初始化脚本的 nounset、增强测试库用户初始化，并让 health 测试断言当前 Settings 环境。前端 frozen install/test/build/lint、后端测试/Ruff、脚本语法和 Compose config 本地复验通过；待推送修复后观察 CI。
 
 - 用户确认温暖编辑感的 Storefront 顾客认证 UI：登录/注册表单、启动时 refresh 恢复、认证后邮箱展示和退出操作，不新增 UI 框架或状态持久化依赖。
 - 按 TDD 为退出编写两个 Red 行为测试：服务端 logout 成功时返回匿名页，以及网络异常时仍清除本地身份；初次定向测试如预期因缺少退出按钮失败。

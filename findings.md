@@ -160,6 +160,7 @@
 
 - Frontend Job 在 `pnpm install --frozen-lockfile` 失败：pnpm 11.9 的干净安装仍将 esbuild 判为 ignored build script 并以退出码 1 结束。最终确认项目需要新版显式批准配置 `allowBuilds: { esbuild: true }`；本地强制重建依赖已执行 `esbuild postinstall ... Done`，随后 frozen install、test、build、lint 已复验通过。
 - Frontend Job 随后在 lint 阶段失败：`@homepilot/auth-client` 定义了 `eslint src`，但没有在自身 `devDependencies` 声明 ESLint。pnpm 的干净 workspace 安装不会让它借用其他包的二进制，因此报 `eslint: not found`。用户确认后补充与两个应用一致的 `eslint: ^9.20.0` 并更新锁文件；本地完整 lint 已通过。
+- Backend Job 后续测试失败：CI 正确注入 `APP_ENV=test`，但健康检查测试硬编码期望 `development`。运行时接口返回当前 Settings 环境的行为是正确的；已将测试改为断言 `get_settings().app_env`，同时覆盖本地和 CI 环境。
 - Backend Job 在全新 GitHub Runner 的 MySQL 初始化阶段退出。完整日志确认：初始化脚本被官方 entrypoint source 后，脚本的 `set -u` 泄漏到 entrypoint，后续读取可选变量 `MYSQL_ONETIME_PASSWORD` 时触发 `unbound variable`。已移除 nounset，仅保留 `set -e`，并保留 Compose 启动失败日志。
 
 | 时间 | 现象 | 处理 |

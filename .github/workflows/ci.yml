@@ -44,13 +44,13 @@ jobs:
         run: uv sync --locked --all-groups
 
       - name: Start MySQL and Redis
-        run: docker compose -f docker-compose.yml up -d --wait --wait-timeout 120 mysql redis
-
-      - name: Show service logs on startup failure
-        if: ${{ failure() }}
         run: |
+          if docker compose -f docker-compose.yml up -d --wait --wait-timeout 120 mysql redis; then
+            exit 0
+          fi
           docker compose -f docker-compose.yml ps -a
           docker compose -f docker-compose.yml logs --no-color mysql redis
+          exit 1
 
       - name: Run backend tests
         working-directory: backend

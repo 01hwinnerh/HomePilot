@@ -161,7 +161,7 @@
 - [x] 确认项目需要 GitHub Actions CI，作为 PR 合并门禁和回归记录。
 - [x] 创建 CI workflow：后端 `uv sync --locked` + pytest + Ruff，前端 `pnpm install --frozen-lockfile` + test + build + lint。
 - [x] 本地等价回归：后端 65 tests/Ruff、前端 workspace test/build/lint、Compose config 均通过。
-- [x] 首次 CI 失败修复：移除无效 pnpm `allowBuilds` 配置；增强 MySQL 测试用户初始化；启动失败时输出 Compose 服务日志。
+- [x] 首次 CI 失败修复：按 pnpm 11.9 使用 `allowBuilds: { esbuild: true }`；增强 MySQL 测试用户初始化；启动失败时输出 Compose 服务日志。
 - [ ] 推送修复后确认 GitHub Runner 的 MySQL 初始化通过；若仍失败，以自动打印的容器内部日志继续定位。
 - [ ] CI 稳定后，再评估 Docker Compose/MySQL/Redis 集成 job 与 nightly Agent 评测；不把外部模型延迟作为 PR 硬门槛。
 

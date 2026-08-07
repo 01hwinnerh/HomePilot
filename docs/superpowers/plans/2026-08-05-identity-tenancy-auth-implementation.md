@@ -713,7 +713,7 @@
 
   Console 的 store 复用 Task 5 的状态结构和 `AuthClient`，不复制 HTTP/CSRF 实现。`ConsoleAuthPanel` 只提供登录，成功后调用 `/me` 的数据展示当前邮箱、平台身份和 `memberships`。无商家关系的普通顾客可登录但显示“当前没有控制台访问权限”，不伪造商家入口。退出后回到登录面板。Console package 加入 `"@homepilot/auth-client": "workspace:*"`、`"@testing-library/react": ">=16 <17"` 和 `"jsdom": ">=26 <28"`，并在 `vite.config.ts` 把 Vitest 环境设为 `"jsdom"`。
 
-- [ ] **Step 4: 用户更新锁文件并完成前端全量回归。**
+- [x] **Step 4: 用户更新锁文件并完成前端全量回归。**
 
   在 **`D:\Project\Codex\vibe-coding\frontend`** 执行：
 
@@ -724,7 +724,7 @@
   pnpm run lint
   ```
 
-  作用：同步 workspace 包引用，并运行共享包、商城和控制台的完整前端测试/构建/lint。预期三个检查均通过；现有 Ant Design bundle 大小警告若仍存在，仅记录为非阻塞警告，不把它当作认证失败。
+  作用：同步 workspace 包引用，并运行共享包、商城和控制台的完整前端测试/构建/lint。用户已完成最终验收，三个检查均通过；Node ESM warning 为非阻塞提示。
 
 - [ ] **Step 5: 用户提交控制台与跨端验证 Commit/PR。**
 

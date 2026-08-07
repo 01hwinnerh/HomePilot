@@ -135,6 +135,13 @@
 - 此策略不把网络异常展示为可继续使用的登录状态；用户可重新登录，服务端 refresh session 的最终失效由下一次成功 logout 或自然到期保障。
 - Storefront 顾客认证 UI PR 已合并；下一模块不得复用旧特性分支上的未确认状态，应先从已同步的 `main` 创建 Console 分支。
 
+## Console 认证 UI 发现（2026-08-07）
+
+- Console 复用 `@homepilot/auth-client` 与 Zustand 内存会话模式；仅在 Console manifest 中声明已有 workspace/test 依赖，没有新增外部版本。
+- Console 权限展示完全来自后端 `AuthUser.is_platform_admin` 与 `memberships`；普通顾客只显示无控制台权限，不由前端推断商家身份。
+- Ant Design 保留为基础组件/主题提供者，认证页采用自定义编辑感 CSS；不提前引入完整后台设计系统或业务导航。
+- Console 的 `import.meta.env` 类型声明需要独立的 `src/vite-env.d.ts`；这是 Vite 类型接线，不放宽 TypeScript strict 检查。
+
 ## 错误记录
 
 | 时间 | 现象 | 处理 |

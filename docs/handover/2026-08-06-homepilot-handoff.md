@@ -102,9 +102,9 @@ Console 必须复用 `@homepilot/auth-client`，但独立维护 UI store。它�
 
 ## 6.1 CI 当前状态
 
-`.github/workflows/ci.yml` 已实现：每个指向 `main` 的 PR 运行锁文件安装、后端 pytest/Ruff、前端 test/build/lint；合并到 `main` 后也会留下最终检查记录。本地 push 前仍应做快速检查，CI 负责远端最终门禁和结果留痕。代码讲解、复述题和参考答案已写入 `.learning/`；用户选择不以复述阻塞 Commit/PR。Docker 集成服务和外部模型评测将独立安排，避免网络或额度波动阻塞普通 PR。
+`.github/workflows/ci.yml` 已实现：每个指向 `main` 的 PR 运行锁文件安装、后端 pytest/Ruff、前端 test/build/lint；合并到 `main` 后也会留下最终检查记录。首次 PR 发现前端 pnpm 配置错误和后端 MySQL 初始化失败：前端已修复，后端已增加初始化防护与失败日志，等待修复推送后的下一次运行。代码讲解、复述题和参考答案已写入 `.learning/`；用户选择不以复述阻塞 Commit/PR。
 
-每一个独立、可在 Commit 信息中清楚说明的模块都必须先通过用户参与式验收，再单独 Commit/PR；禁止把不相关功能塞入同一提交。
+每一个独立、可在 Commit 信息中清楚说明的模块都必须先生成完整学习材料，再单独 Commit/PR；用户复述是可选学习环节，禁止把不相关功能塞入同一提交。
 
 ## 7. 用户协作方式（强约束）
 

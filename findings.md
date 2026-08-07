@@ -156,6 +156,11 @@
 
 ## 错误记录
 
+## GitHub Actions 首次运行发现（2026-08-07）
+
+- Frontend Job 在 `pnpm install --frozen-lockfile` 失败：`pnpm-workspace.yaml` 同时存在有效的 `onlyBuiltDependencies: [esbuild]` 和由误操作生成的无效 `allowBuilds` 值，pnpm 11.9 将 esbuild 判为 ignored build script 并以退出码 1 结束。已删除无效 `allowBuilds` 配置；本地 frozen install、test、build、lint 已复验通过。
+- Backend Job 在全新 GitHub Runner 的 MySQL 初始化阶段退出。现有截图只包含容器退出摘要，没有容器内部错误行，暂不把某个 SQL 错误认定为最终根因。已让测试库脚本显式确保应用用户存在，并在 Compose 启动失败时自动打印服务状态和 MySQL/Redis 日志；等待下一次 CI 运行获取完整证据。
+
 | 时间 | 现象 | 处理 |
 |---|---|---|
 | 2026-08-04 | 自动执行 `uv python install 3.12` 时权限审批代理返回 503 | 用户改为手动执行，已完成 |

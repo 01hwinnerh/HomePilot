@@ -46,6 +46,12 @@ jobs:
       - name: Start MySQL and Redis
         run: docker compose -f docker-compose.yml up -d --wait --wait-timeout 120 mysql redis
 
+      - name: Show service logs on startup failure
+        if: ${{ failure() }}
+        run: |
+          docker compose -f docker-compose.yml ps -a
+          docker compose -f docker-compose.yml logs --no-color mysql redis
+
       - name: Run backend tests
         working-directory: backend
         run: uv run pytest -q

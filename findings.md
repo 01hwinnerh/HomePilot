@@ -142,6 +142,18 @@
 - Ant Design 保留为基础组件/主题提供者，认证页采用自定义编辑感 CSS；不提前引入完整后台设计系统或业务导航。
 - Console 的 `import.meta.env` 类型声明需要独立的 `src/vite-env.d.ts`；这是 Vite 类型接线，不放宽 TypeScript strict 检查。
 
+## Console 合并与 CI 决策（2026-08-07）
+
+- Console 登录与身份展示 PR 已合并，用户已同步 `main` 并确认工作区干净。
+- 当前仓库尚未创建 `.github/workflows/`；建议补充 GitHub Actions CI 作为 PR 门禁。
+- CI 第一版只运行锁文件安装、后端 pytest/Ruff、前端 test/build/lint；本地人工 push 前仍保留快速检查，CI 负责远端最终裁决和留痕。
+- 不在第一版 CI 中强制启动所有 Docker 服务或调用真实 DeepSeek/LangSmith；这些放入独立集成/nightly job，避免外部服务波动阻塞普通 PR。
+- CI review 已确认：Compose `up --wait` 会等待 `running|healthy`，现有 MySQL/Redis healthcheck 已覆盖数据库可连接前的初始化；额外设置 `--wait-timeout 120` 和 Job `timeout-minutes: 15`，防止服务或测试无限等待。
+- Compose 步骤保留在 workflow 根目录；仅 uv/pytest/Ruff 通过 `working-directory: backend` 进入后端目录，因此不会丢失根目录 `docker-compose.yml`。
+- CI review 核验：当前 `frontend/package.json` 的 workspace test 脚本最终执行 `vitest run`，不会进入 watch mode；Node 24.14.1 是本地已验证基线且被 engines `>=22 <25` 接受，暂不因时间敏感的旧版本判断降级到 Node 20/22。
+- 为降低未来维护者对工作目录的误解，workflow 的 Compose 启停命令显式指定根目录 `docker-compose.yml`。
+- CI workflow 本地等价回归已通过：后端 65 tests 与 Ruff、前端三个 workspace 的 test/build/lint，以及 `docker compose config --quiet` 均成功；GitHub Runner 首次真实运行仍需在 PR 中观察。
+
 ## 错误记录
 
 | 时间 | 现象 | 处理 |

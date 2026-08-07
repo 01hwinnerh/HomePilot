@@ -4,6 +4,8 @@
 
 Before making any implementation decision, read `HANDOFF.md`. It is the root-level entry point for the current project state, user collaboration rules, and the detailed session handoff.
 
+After every independent module's PR is merged, update `HANDOFF.md` and `docs/handover/` with the new branch/merge state before starting the next module. Also update them immediately when the user explicitly requests a handoff refresh. These files must describe the latest verified state, not the original implementation plan.
+
 ## Project Structure & Module Organization
 
 HomePilot is a modular monolith for multi-merchant home retail and an agent-assisted support service. The backend lives in `backend/`: application code is split among `app/api/`, `app/core/`, `app/shared/`, and `app/modules/`; tests are in `tests/unit/` and `tests/integration/`; database revisions are in `alembic/versions/`. The pnpm workspace in `frontend/` contains `apps/storefront/` (customer UI) and `apps/console/` (merchant console), with source under each app’s `src/`. Designs, implementation plans, and ADRs live in `docs/superpowers/` and `docs/adr/`. Local infrastructure is defined in `docker-compose.yml`.

@@ -121,6 +121,19 @@
 - `pnpm install --lockfile-only` 能更新 importer，但不会建立新 workspace 包的可执行依赖链接；新包首次测试因此出现 `vitest not found`。普通 `pnpm install` 后测试命令正常。
 - auth-client 的 TypeScript 检查必须启用 `skipLibCheck`，并使用 `ESNext` 标准库类型；否则 Vitest/Vite 声明文件会暴露 Node disposable 类型错误。该配置只作用于共享包，不放宽业务源码的 `strict` 检查。
 
+## Storefront Zustand 会话状态发现（2026-08-06）
+
+- Storefront 通过 `@homepilot/auth-client` workspace 依赖消费共享认证契约；本模块不新增第三方依赖。
+- `restoreSession()` 在 store 闭包内维护唯一 in-flight Promise；React StrictMode 或多个页面同时恢复时只发起一次 refresh，完成/失败后释放引用。
+- refresh 失败只转换为 anonymous，不向 UI 泄露底层异常；access token 只进入 Zustand 内存状态，未使用 persist middleware。
+- 用户执行 Storefront lint 时，pnpm 因新增 workspace manifest 自动补建本地链接；后续验证应先由用户执行普通 `pnpm install`，再运行测试/build/lint。
+
+## Storefront 顾客认证 UI 发现（2026-08-07）
+
+- 登录、注册、启动恢复与退出都复用 `@homepilot/auth-client`，未新增依赖或浏览器存储。
+- 退出采用 `try/catch/finally`：请求后端撤销 refresh Cookie，即使网络异常也必须清空 Zustand 内存身份，防止共享设备继续显示已登录界面。
+- 此策略不把网络异常展示为可继续使用的登录状态；用户可重新登录，服务端 refresh session 的最终失效由下一次成功 logout 或自然到期保障。
+
 ## 错误记录
 
 | 时间 | 现象 | 处理 |

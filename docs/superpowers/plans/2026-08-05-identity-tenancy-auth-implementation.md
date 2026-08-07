@@ -567,7 +567,7 @@
 
   已新增无 React 依赖的 `@homepilot/auth-client`，并用 fake `fetch` 验证 refresh/logout 显式携带 credentials 与 CSRF header。其 2 个 Vitest 测试、TypeScript build 与 ESLint lint 已通过。后端真实字段名为 `memberships`，不是早期草案中的 `merchant_memberships`。
 
-- [ ] **Step 1b: 助手写 Storefront Red 测试。**
+- [x] **Step 1b: 助手写 Storefront Red 测试。**
 
   auth-client 的测试用 fake `fetch` 验证 refresh/logout 显式使用 credentials 和 CSRF header：
 
@@ -581,7 +581,7 @@
 
   Storefront 测试使用 `@testing-library/react` 和 jsdom 验证：未登录显示“登录/注册”；注册成功显示返回的邮箱；应用初始化调用 `refresh()`；退出后清除 Zustand 内存 token。测试不读取或写入 `localStorage`。
 
-- [ ] **Step 2: 助手运行 Storefront Red。**
+- [x] **Step 2: 助手运行 Storefront Red。**
 
   在 `frontend` 目录执行：
 
@@ -592,7 +592,7 @@
 
   预期因 auth store 和组件不存在而失败；由助手诊断，不要求用户手动执行。
 
-- [ ] **Step 3: 实现共享 client。**
+- [x] **Step 3: 实现共享 client。**
 
   `@homepilot/auth-client` 只封装契约，不耦合 React：
 
@@ -630,7 +630,7 @@
 
   不将 token 写入 `localStorage`、`sessionStorage`、URL 或持久化 Zustand middleware。CSRF cookie 读取函数在非浏览器测试环境安全返回空字符串。
 
-- [ ] **Step 4: 实现 Storefront auth store 与最小面板。**
+- [x] **Step 4: 实现 Storefront auth store 与最小面板。**
 
   `store.ts` 的状态和动作固定如下：
 
@@ -647,7 +647,7 @@
 
   `StorefrontAuthPanel` 提供邮箱、密码、登录/注册切换、提交中状态、后端安全错误文案、登录后邮箱和退出按钮。入口组件首次渲染调用 `restoreSession()`；刷新失败只进入 anonymous，不显示 token 相关错误。应用 package 加入 `"@homepilot/auth-client": "workspace:*"`、`"@testing-library/react": ">=16 <17"` 和 `"jsdom": ">=26 <28"`；共享 package 的 exports 指向 `src/index.ts` 并通过自身 `tsc --noEmit`、Vitest、ESLint 脚本参与根 workspace 校验。Storefront 的 `vite.config.ts` 将 `test.environment` 设为 `"jsdom"`。
 
-- [ ] **Step 5: 用户更新前端依赖链接并执行 Green。**
+- [x] **Step 5: 用户更新前端依赖链接并执行 Green。**
 
   在 **`D:\Project\Codex\vibe-coding\frontend`** 执行：
 
@@ -666,12 +666,13 @@
   在项目根目录执行：
 
   ```powershell
-  git add frontend/packages/auth-client frontend/apps/storefront frontend/pnpm-lock.yaml progress.md task_plan.md
-  git commit -m "feat(storefront): add customer authentication flow"
-  git push
+  git add .
+  git diff --cached --stat
+  git commit -m "feat(storefront): add customer authentication panel"
+  git push -u origin feat/storefront-auth-ui
   ```
 
-  作用：提交顾客端可演示的登录和会话恢复闭环，预期推送成功。
+  作用：提交顾客端可演示的登录、注册、刷新恢复和退出闭环。`git diff --cached --stat` 用于在提交前确认未混入无关文件；预期推送成功。
 
 ## 7. Task 6：控制台登录、身份展示与跨端回归
 

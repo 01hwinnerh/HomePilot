@@ -35,6 +35,13 @@
 - auth-client 内部验证通过：2 个 Vitest 测试、TypeScript build、ESLint lint 均通过。发现并修正新包 TypeScript 未配置 `skipLibCheck`/`ESNext` 导致的第三方声明类型错误。
 - 当前暂停在 auth-client 小模块边界，等待用户确认后再进入 Storefront Zustand 内存会话状态；尚未开始商城 UI。
 - 已新增根目录 `HANDOFF.md` 作为恢复开发的显式入口，并在 `AGENTS.md`、`README.md` 中强制/醒目链接；详细交接内容保留在 `docs/handover/2026-08-06-homepilot-handoff.md`。两份文档记录当前已合并能力、auth-client 未提交状态、验证结果、待修订计划项、下一小模块设计选项、协作方式和安全红线。
+- auth-client PR 已合并；在 `feat/storefront-auth-state` 分支完成 Zustand 会话 store：refresh 成功/失败、clear、并发 refresh Promise 去重均有行为测试。助手内部验证为 4 tests passed、Storefront TypeScript build、ESLint、Vite production build 全部通过，等待用户集中验收后提交本小模块 PR。
+
+## 2026-08-07
+
+- 用户确认温暖编辑感的 Storefront 顾客认证 UI：登录/注册表单、启动时 refresh 恢复、认证后邮箱展示和退出操作，不新增 UI 框架或状态持久化依赖。
+- 按 TDD 为退出编写两个 Red 行为测试：服务端 logout 成功时返回匿名页，以及网络异常时仍清除本地身份；初次定向测试如预期因缺少退出按钮失败。
+- 最小 Green 实现调用 `storefrontAuthClient.logout()`，并在 `finally` 清空 Zustand 内存状态；组件定向回归为 5 passed。待完成完整前端集中验证后提交 Task 5 UI 闭环。
 
 - Task 3 已合并并同步到干净的 `main`；用户创建 `feat/tenant-context` 后进入 Task 4。
 - Task 4 完成首轮 Red→Green：Principal 从服务端 active User 构造、TenantContext 从 active membership/merchant 构造、Tenant/Platform Repository 边界、SQLAlchemy tenant scope 过滤与 FastAPI 认证依赖。

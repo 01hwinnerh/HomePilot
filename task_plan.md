@@ -9,8 +9,47 @@
 - 项目名称：HomePilot
 - 最近确认：用户已通过 uv 安装 Python 3.12；所有安装与 Git 命令由用户手动执行。
 - 最近确认：采用“稳定大版本 + 锁文件固定精确版本”的依赖策略。
-- 当前模块：Task 5 共享前端 auth-client（第一小模块已完成，等待用户小模块验收）。
-- 当前阻塞：无；auth-client 不新增运行时依赖，前端 workspace 依赖链接已由用户手动安装完成。
+- 当前模块：Task 5 Storefront 顾客认证 UI（登录、注册、启动恢复与退出均已实现，等待用户集中验收和独立 Commit/PR）。
+- 当前阻塞：无；本模块未新增第三方依赖，Storefront 已接入共享 auth-client workspace 包。
+
+## 技术栈与版本基线
+
+这是项目的已确认技术基线；新增依赖、框架升级或版本冲突必须先记录到 `findings.md` 并向用户说明，不能自行替换。
+
+| 层级 | 技术选型 | 已确认版本/策略 |
+|---|---|---|
+| Python 运行时 | Python + uv | Python 3.12；由 uv 项目虚拟环境隔离，不覆盖本机 Anaconda 3.11 |
+| 后端 API | FastAPI、Pydantic、SQLAlchemy、Alembic | Python 3.12；实际精确版本由 `backend/uv.lock` 固定 |
+| 数据库 | MySQL | 8.4；交易、身份和审计数据真源 |
+| 缓存/队列 | Redis、Celery、Transactional Outbox | Redis 7.4；不作为库存真源 |
+| Agent | LangChain、LangGraph、LangSmith | 通过集中配置接入 DeepSeek，默认 `deepseek-v4-flash` |
+| RAG | Qdrant、MinIO、Embedding/Reranker Provider | Qdrant/MinIO 使用已验证 digest；版本治理按生效知识版本执行 |
+| Storefront | React、TypeScript、Vite、Zustand、TanStack Query、Tailwind | Node 24.14.1、pnpm 11.9.0；实际精确版本由 `frontend/pnpm-lock.yaml` 固定 |
+| Console | React、TypeScript、Vite、Ant Design | 与 Storefront 共用 Node/pnpm workspace，按角色加载路由 |
+| 测试与质量 | pytest、Vitest、Ruff、ESLint、TypeScript | 每个独立模块采用 TDD，并在 Commit/PR 前集中回归 |
+| 本地基础设施 | Docker Compose、Nginx（后续部署） | Docker Compose 5.1.3；本地服务由 Docker Desktop 管理 |
+
+### 当前锁定的关键解析版本
+
+以下是当前锁文件已解析并验证过的关键直接依赖版本；完整依赖树仍以两个 lock 文件为准。
+
+| 领域 | 关键版本 |
+|---|---|
+| 后端 Web/数据 | FastAPI 0.141.1、Pydantic 2.13.4、SQLAlchemy 2.0.51、Alembic 1.18.5、Uvicorn 0.52.1 |
+| 后端任务/缓存 | Celery 5.6.3、Redis Python client 5.3.1、cryptography 46.0.7 |
+| 认证 | argon2-cffi 25.1.0、email-validator 2.3.0、PyJWT 2.13.0 |
+| Agent/观测 | LangChain 1.3.14、LangGraph 1.2.10、langgraph-checkpoint-redis 0.5.1、LangSmith 0.10.15 |
+| RAG/存储 | qdrant-client 1.18.0、MinIO Python SDK 7.2.20 |
+| 前端运行时 | Node 24.14.1、pnpm 11.9.0、React 19.2.8、TypeScript 5.7.3 |
+| 前端工程/测试 | Vite 6.4.3、Vitest 3.2.7、ESLint 9.39.5、Zustand 5.0.14、jsdom 27.4.0 |
+| 控制台 UI | Ant Design 5.29.3 |
+
+### 配置与密钥边界
+
+- 服务地址、Provider、模型名、开关统一由根目录 `.env` 和 `backend/app/core/config.py` 管理。
+- `.env.example` 只保留变量名和非敏感示例；真实 DeepSeek/LangSmith/数据库等密钥不得提交。
+- DeepSeek 默认 API 地址为 `https://api.deepseek.com`，默认模型为 `deepseek-v4-flash`；`deepseek-v4-pro` 仅作为手动切换项。
+- 本地开发允许 `AUTH_COOKIE_SECURE=false`；上线前必须切换为 HTTPS + `AUTH_COOKIE_SECURE=true`，并完成生产配置前置检查。
 
 ## 阶段追踪
 
@@ -81,13 +120,27 @@
 - [x] 用户执行业务库迁移、认证定向回归、后端全量回归和 Ruff；复核修订后的全量测试为 56 passed，Ruff 通过。
 - [x] 用户完成 `feat(auth): add rotating session authentication API` Commit 与 GitHub PR，已合并至 `main`。
 
-## 当前模块：Storefront auth-client（Task 5 第一小模块）
+## 已完成模块：Storefront auth-client（Task 5 第一小模块）
 
 - [x] 共享包 `@homepilot/auth-client`：认证类型、register/login/refresh/logout/me、Cookie/CSRF 和错误契约。
 - [x] auth-client 行为测试、TypeScript build 与 lint 已由助手验证通过。
-- [ ] 用户小模块验收后提交独立 Commit/PR。
-- [ ] Zustand 内存会话状态。
-- [ ] Storefront 登录/注册面板与页面恢复。
+- [x] 用户完成该小模块验收并提交独立 Commit/PR。
+
+## 已完成模块：Storefront Zustand 内存会话状态（Task 5 第二小模块）
+
+- [x] `createAuthStore(authClient)` 依赖注入接口。
+- [x] refresh 成功、refresh 失败匿名、clear 清空内存状态。
+- [x] 并发 `restoreSession()` Promise 去重，避免 StrictMode 触发重复 refresh rotation。
+- [x] 4 个行为测试、TypeScript build、ESLint、Vite production build 已通过。
+
+## 当前模块：Storefront 顾客认证 UI（Task 5 第三小模块）
+
+- [x] 温暖编辑感登录/注册面板，含提交态与安全错误文案。
+- [x] 应用启动恢复 refresh session；失败时安全落为匿名状态。
+- [x] 注册/登录成功后仅将 access token 保存至 Zustand 内存。
+- [x] 退出时调用服务端 logout；无论请求成功或失败都清空本地认证状态。
+- [x] 行为测试覆盖匿名、注册、登录失败、启动恢复、退出成功与退出网络失败。
+- [ ] 用户集中验收后，以 Task 5 完整 UI 闭环提交独立 Commit/PR。
 
 ## 已完成模块：Principal、TenantContext 与 Repository 硬隔离（Task 4）
 
@@ -109,6 +162,7 @@
 5. 每个可独立说明的模块完成后，先提示用户手动执行 Commit 并发起 GitHub PR；下一模块不得与该 Commit 混合。Commit 信息采用 Conventional Commits，并准确描述本模块边界。
 6. 预期必然失败的 TDD Red、诊断命令和静态探针由助手执行并记录；用户主要执行 Green、阶段回归、安装/Docker 状态变更和 Git 命令，且每条用户命令都说明目录、作用与预期结果。
 7. 同一小模块内连续的 Green 测试和静态检查应合并为一组命令交给用户执行；助手在内部仍按单个行为完成 Red→Green，避免未验证改动累积。
+8. 每个独立模块的 PR 合并后，或用户主动要求更新时，必须同步更新 `HANDOFF.md` 与 `docs/handover/`；交接内容以最新已验证和已合并状态为准，不能继续描述已完成模块为“待开发”。
 
 ## 未来上线的强制前置检查
 

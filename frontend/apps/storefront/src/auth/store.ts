@@ -1,8 +1,9 @@
 import { create } from "zustand";
 
-import type { AuthClient, AuthResponse, AuthUser } from "@homepilot/auth-client";
+import { AuthClient } from "@homepilot/auth-client";
+import type { AuthResponse, AuthUser } from "@homepilot/auth-client";
 
-type AuthClientPort = Pick<AuthClient, "refresh">;
+export type AuthRestoreClient = Pick<AuthClient, "refresh">;
 
 export type AuthState = {
   status: "loading" | "anonymous" | "authenticated";
@@ -13,7 +14,7 @@ export type AuthState = {
   clear: () => void;
 };
 
-export function createAuthStore(authClient: AuthClientPort) {
+export function createAuthStore(authClient: AuthRestoreClient) {
   return create<AuthState>((set) => {
     let restoreInFlight: Promise<void> | null = null;
 
@@ -61,3 +62,8 @@ export function createAuthStore(authClient: AuthClientPort) {
     };
   });
 }
+
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
+
+export const storefrontAuthClient = new AuthClient(apiBaseUrl);
+export const storefrontAuthStore = createAuthStore(storefrontAuthClient);

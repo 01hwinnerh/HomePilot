@@ -20,11 +20,29 @@
 
 上一次后端最终回归为：`65 passed`，`uv run ruff check .` 通过。Starlette `TestClient` 弃用警告是既有上游警告，当前不处理。
 
-## 3. 当前未提交模块：Storefront 共享 auth-client
+## 3. 当前未提交模块：Storefront 顾客认证 UI
 
-当前开发分支预期为 `feat/storefront-auth`。新 Agent **不得自行执行 Git 命令**；由用户在终端确认分支及提交状态。
+当前开发分支为 `feat/storefront-auth-ui`。新 Agent **不得自行执行 Git 命令**；由用户在终端确认分支及提交状态。
 
-已完成并经用户最终验收的第一小模块：
+共享 `@homepilot/auth-client` 与 Zustand 内存会话状态均已合并；当前分支只完成 Storefront 的认证 UI 闭环：
+
+```text
+frontend/apps/storefront/src/
+├─ App.tsx
+├─ App.test.tsx
+├─ styles.css
+└─ auth/
+   ├─ StorefrontAuthPanel.tsx
+   └─ StorefrontAuthPanel.test.tsx
+```
+
+页面使用已确认的温暖编辑感视觉：匿名用户可切换登录/注册；应用启动执行 refresh 恢复；认证成功显示邮箱；退出调用后端 logout，并且无论网络请求成功还是失败都会清空 Zustand 内存身份。access token 不落盘。
+
+最新助手定向验证：Storefront 10 个行为测试、TypeScript、ESLint 和 Vite production build 均通过；等待用户集中验收后提交该独立 Commit/PR。
+
+## 3.1 已合并的共享 auth-client
+
+已完成并经用户最终验收、现已合并的共享包：
 
 ```text
 frontend/packages/auth-client/
@@ -52,14 +70,7 @@ pnpm --filter @homepilot/auth-client build  # passed
 pnpm --filter @homepilot/auth-client lint   # passed
 ```
 
-预计还未提交的相关变更：
-
-- `frontend/packages/auth-client/`（新增）；
-- `frontend/pnpm-lock.yaml`（新增 workspace importer）；
-- `task_plan.md`、`findings.md`、`progress.md`（已更新）；
-- 本交接文档（新增）。
-
-不要删除或覆盖用户/平台创建的 `AGENTS.md`；是否纳入当前 Commit 由用户决定。
+不要删除或覆盖用户/平台创建的 `AGENTS.md`。
 
 ## 4. 已处理问题与不可重复踩坑
 
@@ -75,28 +86,9 @@ pnpm --filter @homepilot/auth-client lint   # passed
 
 ## 5. 恢复开发时的下一步（必须先讨论）
 
-下一小模块是 **Storefront Zustand 内存会话状态**，只创建 `frontend/apps/storefront/src/auth/store.ts` 及对应单元测试；不要同时做登录界面。
+先完成当前 Storefront UI 的用户集中验收、Commit 与 PR。合并后，下一模块是 **Console 登录、商家/平台身份展示**；不要同时开始商品或订单业务。
 
-恢复会话的目标行为：
-
-1. 应用启动时调用 `AuthClient.refresh()`；
-2. 成功时只把 access token 和 `user` 写入 Zustand 内存；
-3. 失败时静默落为 `anonymous`，不把 refresh 失败当作页面错误；
-4. `acceptAuth()` 接收 register/login 的响应；
-5. `clear()` 清空内存身份状态；
-6. 不使用 Zustand persist middleware，不读写 Web Storage。
-
-新 Agent 必须先向用户说明并确认以下方案，而不是直接编码：
-
-| 方案 | 结论 | 原因 |
-|---|---|---|
-| Zustand 全局内存 store（推荐） | 采用 | 项目既定技术栈；Storefront 顶层、登录面板、后续订单/客服页面都可订阅；接口小且可独立测试。 |
-| React Context + `useReducer` | 不采用 | 无额外依赖，但每次新增跨页面身份消费都会增加 Provider/Selector 重渲染与样板代码。 |
-| TanStack Query 作为唯一身份状态 | 不采用 | 适合服务端缓存，但 access token 是短生命周期本地敏感状态，不宜混为可查询缓存。 |
-
-推荐测试顺序（TDD）：先写“refresh 成功进入 authenticated”的一个 Red 测试，再实现最小 store；随后单独增加“refresh 失败匿名”和“clear 清空 token/user”测试。每个行为单独 Red→Green，定向测试由 Agent 执行。
-
-完成 store 并经用户小模块验收后，才进入下一个小模块：Storefront 登录/注册面板。该 UI 阶段应先做设计说明，采用温暖、编辑感的精品家居风格（纸张/石灰岩色、炭黑正文、暖琥珀点缀），避免泛紫色渐变和模板化 SaaS 卡片。
+Console 必须复用 `@homepilot/auth-client`，但独立维护 UI store。它只展示后端 `/me` 返回的邮箱、`memberships` 和平台管理员标识，不能从 JWT 或前端参数伪造商家权限。开始前向用户说明并确认 Console 的界面方案、测试边界和无控制台权限的普通顾客提示策略。
 
 ## 6. 后续身份模块路线
 
@@ -104,12 +96,10 @@ pnpm --filter @homepilot/auth-client lint   # passed
 
 剩余顺序：
 
-1. Storefront Zustand 内存会话状态；
-2. Storefront 登录/注册面板、启动恢复、退出和 jsdom 组件测试；
-3. 完成 Task 5 的独立 Commit/PR；
-4. Console 登录、商家/平台身份展示（Task 6）；
-5. 可重复演示种子数据与端到端联调（Task 7）；
-6. 再进入商家、商品、库存、订单、策略、知识库、RAG 与 Agent 阶段。
+1. 完成当前 Storefront UI 的独立 Commit/PR；
+2. Console 登录、商家/平台身份展示（Task 6）；
+3. 可重复演示种子数据与端到端联调（Task 7）；
+4. 再进入商家、商品、库存、订单、策略、知识库、RAG 与 Agent 阶段。
 
 每一个独立、可在 Commit 信息中清楚说明的模块都必须先通过用户参与式验收，再单独 Commit/PR；禁止把不相关功能塞入同一提交。
 

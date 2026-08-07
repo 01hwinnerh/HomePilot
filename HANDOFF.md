@@ -9,9 +9,10 @@
 - 项目：HomePilot，多商家精品家居平台 + 可审计 RAG/Agent 客服。
 - 已合并：工程骨架、Docker 基础设施、数据库/Alembic、身份数据模型、认证 API、租户硬隔离。
 - 上一次后端回归：`65 passed`，Ruff 通过；既有 Starlette `TestClient` 弃用警告暂不处理。
-- 当前分支预期：`feat/storefront-auth`（由用户自行确认，不要自行执行 Git 命令）。
-- 当前未提交模块：`@homepilot/auth-client`；其 test（2/2）、TypeScript build、lint 均已通过用户验收。
-- 下一小模块：仅实现 Storefront 的 Zustand 内存会话状态及单元测试；**先向用户说明选型、备选方案和测试行为，获得确认后再编码**。
+- 当前分支预期：`feat/storefront-auth-ui`（由用户自行确认，不要自行执行 Git 命令）。
+- `@homepilot/auth-client` 已独立合并。
+- 当前未提交模块：Storefront 顾客认证 UI，覆盖登录、注册、启动恢复和退出；完成最终前端集中验收后提交独立 PR。
+- 下一模块：Console 登录、商家/平台身份展示；开始前仍需先说明 UI 选型和验收边界。
 
 ## 恢复开发的固定顺序
 

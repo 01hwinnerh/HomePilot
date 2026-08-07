@@ -1,4 +1,4 @@
-# HomePilot 开发交接文档（2026-08-06）
+# HomePilot 开发交接文档（2026-08-07）
 
 > 本文用于在关闭当前对话后快速恢复开发。新 Coding Agent 应先阅读本文，再阅读根目录 `AGENTS.md`、`task_plan.md`、`findings.md`、`progress.md` 与对应的设计/实施计划；不要根据旧对话记录猜测项目状态。
 
@@ -20,9 +20,9 @@
 
 上一次后端最终回归为：`65 passed`，`uv run ruff check .` 通过。Starlette `TestClient` 弃用警告是既有上游警告，当前不处理。
 
-## 3. 当前未提交模块：Storefront 顾客认证 UI
+## 3. 已合并模块：Storefront 顾客认证 UI
 
-当前开发分支为 `feat/storefront-auth-ui`。新 Agent **不得自行执行 Git 命令**；由用户在终端确认分支及提交状态。
+Storefront 顾客认证 UI PR 已合并。新 Agent **不得自行执行 Git 命令**；由用户在终端确认本地是否已切回并同步 `main`。
 
 共享 `@homepilot/auth-client` 与 Zustand 内存会话状态均已合并；当前分支只完成 Storefront 的认证 UI 闭环：
 
@@ -38,7 +38,7 @@ frontend/apps/storefront/src/
 
 页面使用已确认的温暖编辑感视觉：匿名用户可切换登录/注册；应用启动执行 refresh 恢复；认证成功显示邮箱；退出调用后端 logout，并且无论网络请求成功还是失败都会清空 Zustand 内存身份。access token 不落盘。
 
-最新助手定向验证：Storefront 10 个行为测试、TypeScript、ESLint 和 Vite production build 均通过；等待用户集中验收后提交该独立 Commit/PR。
+最终验证：auth-client 2 个测试、Storefront 11 个测试、TypeScript、ESLint 和 Vite production build 均通过；用户已完成集中验收并合并独立 Commit/PR。
 
 ## 3.1 已合并的共享 auth-client
 
@@ -86,7 +86,7 @@ pnpm --filter @homepilot/auth-client lint   # passed
 
 ## 5. 恢复开发时的下一步（必须先讨论）
 
-先完成当前 Storefront UI 的用户集中验收、Commit 与 PR。合并后，下一模块是 **Console 登录、商家/平台身份展示**；不要同时开始商品或订单业务。
+下一模块是 **Console 登录、商家/平台身份展示**；开始前先确认本地 `main` 已同步 Storefront 合并结果，不要同时开始商品或订单业务。
 
 Console 必须复用 `@homepilot/auth-client`，但独立维护 UI store。它只展示后端 `/me` 返回的邮箱、`memberships` 和平台管理员标识，不能从 JWT 或前端参数伪造商家权限。开始前向用户说明并确认 Console 的界面方案、测试边界和无控制台权限的普通顾客提示策略。
 
@@ -96,10 +96,9 @@ Console 必须复用 `@homepilot/auth-client`，但独立维护 UI store。它�
 
 剩余顺序：
 
-1. 完成当前 Storefront UI 的独立 Commit/PR；
-2. Console 登录、商家/平台身份展示（Task 6）；
-3. 可重复演示种子数据与端到端联调（Task 7）；
-4. 再进入商家、商品、库存、订单、策略、知识库、RAG 与 Agent 阶段。
+1. Console 登录、商家/平台身份展示（Task 6）；
+2. 可重复演示种子数据与端到端联调（Task 7）；
+3. 再进入商家、商品、库存、订单、策略、知识库、RAG 与 Agent 阶段。
 
 每一个独立、可在 Commit 信息中清楚说明的模块都必须先通过用户参与式验收，再单独 Commit/PR；禁止把不相关功能塞入同一提交。
 

@@ -133,6 +133,7 @@
 - 登录、注册、启动恢复与退出都复用 `@homepilot/auth-client`，未新增依赖或浏览器存储。
 - 退出采用 `try/catch/finally`：请求后端撤销 refresh Cookie，即使网络异常也必须清空 Zustand 内存身份，防止共享设备继续显示已登录界面。
 - 此策略不把网络异常展示为可继续使用的登录状态；用户可重新登录，服务端 refresh session 的最终失效由下一次成功 logout 或自然到期保障。
+- Storefront 顾客认证 UI PR 已合并；下一模块不得复用旧特性分支上的未确认状态，应先从已同步的 `main` 创建 Console 分支。
 
 ## 错误记录
 

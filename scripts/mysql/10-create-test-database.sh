@@ -1,5 +1,9 @@
 #!/bin/sh
-set -eu
+
+# MySQL's entrypoint sources this file into its own shell. Do not enable
+# nounset (`set -u`) here: it would leak into the entrypoint and make its
+# optional variables fail after this script returns.
+set -e
 
 test_database="${MYSQL_TEST_DATABASE:-homepilot_test}"
 business_database="${MYSQL_DATABASE:-homepilot}"

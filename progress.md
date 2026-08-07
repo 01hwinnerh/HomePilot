@@ -42,6 +42,7 @@
 - 用户确认温暖编辑感的 Storefront 顾客认证 UI：登录/注册表单、启动时 refresh 恢复、认证后邮箱展示和退出操作，不新增 UI 框架或状态持久化依赖。
 - 按 TDD 为退出编写两个 Red 行为测试：服务端 logout 成功时返回匿名页，以及网络异常时仍清除本地身份；初次定向测试如预期因缺少退出按钮失败。
 - 最小 Green 实现调用 `storefrontAuthClient.logout()`，并在 `finally` 清空 Zustand 内存状态；组件定向回归为 5 passed。待完成完整前端集中验证后提交 Task 5 UI 闭环。
+- 用户完成 Storefront auth-client、Storefront 会话状态和顾客认证 UI 的集中验收，并合并独立 PR；Task 5 身份前端闭环完成。下一步是从同步后的 `main` 进入 Console 登录模块。
 
 - Task 3 已合并并同步到干净的 `main`；用户创建 `feat/tenant-context` 后进入 Task 4。
 - Task 4 完成首轮 Red→Green：Principal 从服务端 active User 构造、TenantContext 从 active membership/merchant 构造、Tenant/Platform Repository 边界、SQLAlchemy tenant scope 过滤与 FastAPI 认证依赖。

@@ -1,0 +1,249 @@
+:root {
+  color: #202722;
+  background: #f3f0e9;
+  font-family: "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: #f3f0e9;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.console-auth-shell {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.8fr) minmax(360px, 1.2fr);
+  min-height: 100vh;
+  background: #f3f0e9;
+}
+
+.console-rail {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 48px clamp(28px, 5vw, 80px);
+  color: #f5f1e8;
+  background: #26332d;
+}
+
+.console-mark,
+.console-kicker,
+.console-rail-index,
+.console-header-caption,
+.console-membership-label {
+  margin: 0;
+  color: #a4622c;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.console-rail .console-mark {
+  color: #e1a264;
+}
+
+.console-rail-index {
+  color: #bfc7bf;
+}
+
+.console-rail-copy {
+  max-width: 290px;
+  margin: 0;
+  color: #dce1db;
+  font-family: Georgia, serif;
+  font-size: clamp(1.8rem, 3vw, 3rem);
+  line-height: 1.12;
+}
+
+.console-auth-card,
+.console-identity-card {
+  width: min(100%, 620px);
+  margin: auto;
+  padding: clamp(36px, 7vw, 96px);
+}
+
+.console-auth-card h1,
+.console-identity-card h1 {
+  margin: 14px 0 12px;
+  color: #202722;
+  font-family: Georgia, serif;
+  font-size: clamp(2.7rem, 6vw, 5.6rem);
+  font-weight: 400;
+  letter-spacing: -0.06em;
+  line-height: 0.95;
+}
+
+.console-intro,
+.console-email,
+.console-no-access {
+  color: #667069;
+  line-height: 1.7;
+}
+
+.console-auth-card form {
+  display: grid;
+  gap: 10px;
+  margin-top: 42px;
+}
+
+.console-auth-card label {
+  color: #465249;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.console-auth-card input {
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 13px 14px;
+  color: #202722;
+  border: 1px solid #c8c6bd;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.48);
+}
+
+.console-auth-card input:focus {
+  border-color: #a4622c;
+  outline: 2px solid rgba(164, 98, 44, 0.18);
+  outline-offset: 2px;
+}
+
+.console-auth-card button,
+.console-header button {
+  width: fit-content;
+  margin-top: 12px;
+  padding: 12px 20px;
+  color: #fffaf1;
+  border: 0;
+  border-radius: 2px;
+  background: #a4622c;
+}
+
+.console-auth-card button:hover,
+.console-header button:hover {
+  background: #844b22;
+}
+
+.console-auth-card button:disabled,
+.console-header button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.console-auth-card [role="alert"] {
+  margin: 4px 0;
+  color: #a03f2d;
+}
+
+.console-workspace {
+  min-height: 100vh;
+  padding: 38px clamp(24px, 6vw, 96px) 80px;
+  background: #f3f0e9;
+}
+
+.console-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid #d4d0c6;
+  padding-bottom: 26px;
+}
+
+.console-header .console-mark {
+  color: #26332d;
+}
+
+.console-header-caption {
+  margin-top: 8px;
+  color: #7c867e;
+}
+
+.console-identity-card {
+  margin: 0;
+  padding-left: 0;
+}
+
+.console-identity-card h1 {
+  max-width: 720px;
+}
+
+.console-email {
+  margin-bottom: 34px;
+}
+
+.console-memberships {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-top: 38px;
+}
+
+.console-membership {
+  padding: 24px;
+  border-top: 2px solid #a4622c;
+  background: rgba(255, 255, 255, 0.54);
+}
+
+.console-membership h2 {
+  margin: 28px 0 14px;
+  color: #202722;
+  font-family: Georgia, serif;
+  font-size: 1.65rem;
+  font-weight: 400;
+}
+
+.console-role {
+  margin: 0;
+  color: #a4622c;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.console-role-platform {
+  display: inline-block;
+  padding: 8px 12px;
+  border: 1px solid #a4622c;
+}
+
+.console-loading {
+  margin: auto;
+  color: #667069;
+}
+
+@media (max-width: 760px) {
+  .console-auth-shell {
+    display: block;
+  }
+
+  .console-rail {
+    min-height: 250px;
+    gap: 56px;
+  }
+
+  .console-auth-card {
+    padding: 48px 28px 64px;
+  }
+
+  .console-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

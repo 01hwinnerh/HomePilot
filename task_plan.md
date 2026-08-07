@@ -9,7 +9,7 @@
 - 项目名称：HomePilot
 - 最近确认：用户已通过 uv 安装 Python 3.12；所有安装与 Git 命令由用户手动执行。
 - 最近确认：采用“稳定大版本 + 锁文件固定精确版本”的依赖策略。
-- 当前模块：Task 5 Storefront 顾客认证 UI 已完成并合并；下一步进入 Task 6 Console 登录（开始前确认本地 `main` 同步）。
+- 当前模块：Task 6 Console 登录与商家/平台身份展示（已完成内部实现、workspace 回归与用户集中验收，等待独立 Commit/PR）。
 - 当前阻塞：无；本模块未新增第三方依赖，Storefront 已接入共享 auth-client workspace 包。
 
 ## 技术栈与版本基线
@@ -144,9 +144,10 @@
 
 ## 下一模块：Console 登录、商家/平台身份展示（Task 6）
 
-- [ ] 用户确认本地 `main` 已包含 Storefront UI 合并结果，并创建 Console 特性分支。
-- [ ] 说明 Console UI 选型、普通顾客无控制台权限提示和测试边界，获得用户确认后再编码。
-- [ ] 复用 `@homepilot/auth-client`，实现 Console 内存会话 store、登录、启动恢复、身份摘要和退出。
+- [x] 用户确认本地 `main` 已包含 Storefront UI 合并结果，并创建 Console 特性分支。
+- [x] 说明并确认 Console UI 选型、普通顾客无控制台权限提示和测试边界。
+- [x] 复用 `@homepilot/auth-client`，实现 Console 内存会话 store、登录、启动恢复、身份摘要和退出。
+- [x] Console 行为测试、TypeScript、ESLint 和 Vite production build 已由助手通过；用户已完成前端 workspace 最终验收。
 
 ## 已完成模块：Principal、TenantContext 与 Repository 硬隔离（Task 4）
 

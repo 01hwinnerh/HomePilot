@@ -86,7 +86,7 @@ pnpm --filter @homepilot/auth-client lint   # passed
 
 ## 5. 恢复开发时的下一步（必须先讨论）
 
-下一模块是 **Console 登录、商家/平台身份展示**；开始前先确认本地 `main` 已同步 Storefront 合并结果，不要同时开始商品或订单业务。
+当前模块是 **Console 登录、商家/平台身份展示**，分支应为 `feat/console-auth`；已完成内部实现、workspace 回归和用户集中验收，等待独立 Commit/PR。不要同时开始商品或订单业务。
 
 Console 必须复用 `@homepilot/auth-client`，但独立维护 UI store。它只展示后端 `/me` 返回的邮箱、`memberships` 和平台管理员标识，不能从 JWT 或前端参数伪造商家权限。开始前向用户说明并确认 Console 的界面方案、测试边界和无控制台权限的普通顾客提示策略。
 
@@ -96,7 +96,7 @@ Console 必须复用 `@homepilot/auth-client`，但独立维护 UI store。它�
 
 剩余顺序：
 
-1. Console 登录、商家/平台身份展示（Task 6）；
+1. 完成 Console 独立 Commit/PR 并合并；
 2. 可重复演示种子数据与端到端联调（Task 7）；
 3. 再进入商家、商品、库存、订单、策略、知识库、RAG 与 Agent 阶段。
 

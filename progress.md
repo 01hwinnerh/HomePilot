@@ -43,6 +43,8 @@
 - 按 TDD 为退出编写两个 Red 行为测试：服务端 logout 成功时返回匿名页，以及网络异常时仍清除本地身份；初次定向测试如预期因缺少退出按钮失败。
 - 最小 Green 实现调用 `storefrontAuthClient.logout()`，并在 `finally` 清空 Zustand 内存状态；组件定向回归为 5 passed。待完成完整前端集中验证后提交 Task 5 UI 闭环。
 - 用户完成 Storefront auth-client、Storefront 会话状态和顾客认证 UI 的集中验收，并合并独立 PR；Task 5 身份前端闭环完成。下一步是从同步后的 `main` 进入 Console 登录模块。
+- 用户确认 Console 推荐方案并创建 `feat/console-auth` 分支；按 TDD 完成商家身份、普通顾客无权限、平台管理员、登录、启动 refresh、refresh 失败、并发 refresh、退出成功与退出失败行为。
+- Console 内部回归结果：4 个测试文件、11 个测试通过；TypeScript、ESLint、Vite production build 通过。首次类型检查发现缺少 `vite-env.d.ts`，已补齐后复验通过；用户完成前端 workspace 最终验收，等待独立 Commit/PR。
 
 - Task 3 已合并并同步到干净的 `main`；用户创建 `feat/tenant-context` 后进入 Task 4。
 - Task 4 完成首轮 Red→Green：Principal 从服务端 active User 构造、TenantContext 从 active membership/merchant 构造、Tenant/Platform Repository 边界、SQLAlchemy tenant scope 过滤与 FastAPI 认证依赖。

@@ -10,6 +10,7 @@
     "lint": "eslint src --max-warnings=0"
   },
   "dependencies": {
+    "@homepilot/auth-client": "workspace:*",
     "@tanstack/react-query": "^5.66.0",
     "antd": "^5.24.0",
     "react": "^19.0.0",
@@ -17,10 +18,12 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@testing-library/react": ">=16 <17",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "@vitejs/plugin-react": "^4.4.1",
     "eslint": "^9.20.0",
+    "jsdom": ">=26 <28",
     "typescript": "~5.7.3",
     "vite": "^6.2.0",
     "vitest": "^3.0.7"

@@ -142,7 +142,26 @@
 - Ant Design 保留为基础组件/主题提供者，认证页采用自定义编辑感 CSS；不提前引入完整后台设计系统或业务导航。
 - Console 的 `import.meta.env` 类型声明需要独立的 `src/vite-env.d.ts`；这是 Vite 类型接线，不放宽 TypeScript strict 检查。
 
+## Console 合并与 CI 决策（2026-08-07）
+
+- Console 登录与身份展示 PR 已合并，用户已同步 `main` 并确认工作区干净。
+- 当前仓库尚未创建 `.github/workflows/`；建议补充 GitHub Actions CI 作为 PR 门禁。
+- CI 第一版只运行锁文件安装、后端 pytest/Ruff、前端 test/build/lint；本地人工 push 前仍保留快速检查，CI 负责远端最终裁决和留痕。
+- 不在第一版 CI 中强制启动所有 Docker 服务或调用真实 DeepSeek/LangSmith；这些放入独立集成/nightly job，避免外部服务波动阻塞普通 PR。
+- CI review 已确认：Compose `up --wait` 会等待 `running|healthy`，现有 MySQL/Redis healthcheck 已覆盖数据库可连接前的初始化；额外设置 `--wait-timeout 120` 和 Job `timeout-minutes: 15`，防止服务或测试无限等待。
+- Compose 步骤保留在 workflow 根目录；仅 uv/pytest/Ruff 通过 `working-directory: backend` 进入后端目录，因此不会丢失根目录 `docker-compose.yml`。
+- CI review 核验：当前 `frontend/package.json` 的 workspace test 脚本最终执行 `vitest run`，不会进入 watch mode；Node 24.14.1 是本地已验证基线且被 engines `>=22 <25` 接受，暂不因时间敏感的旧版本判断降级到 Node 20/22。
+- 为降低未来维护者对工作目录的误解，workflow 的 Compose 启停命令显式指定根目录 `docker-compose.yml`。
+- CI workflow 本地等价回归已通过：后端 65 tests 与 Ruff、前端三个 workspace 的 test/build/lint，以及 `docker compose config --quiet` 均成功；GitHub Runner 首次真实运行仍需在 PR 中观察。
+
 ## 错误记录
+
+## GitHub Actions 首次运行发现（2026-08-07）
+
+- Frontend Job 在 `pnpm install --frozen-lockfile` 失败：pnpm 11.9 的干净安装仍将 esbuild 判为 ignored build script 并以退出码 1 结束。最终确认项目需要新版显式批准配置 `allowBuilds: { esbuild: true }`；本地强制重建依赖已执行 `esbuild postinstall ... Done`，随后 frozen install、test、build、lint 已复验通过。
+- Frontend Job 随后在 lint 阶段失败：`@homepilot/auth-client` 定义了 `eslint src`，但没有在自身 `devDependencies` 声明 ESLint。pnpm 的干净 workspace 安装不会让它借用其他包的二进制，因此报 `eslint: not found`。用户确认后补充与两个应用一致的 `eslint: ^9.20.0` 并更新锁文件；本地完整 lint 已通过。
+- Backend Job 后续测试失败：CI 正确注入 `APP_ENV=test`，但健康检查测试硬编码期望 `development`。运行时接口返回当前 Settings 环境的行为是正确的；已将测试改为断言 `get_settings().app_env`，同时覆盖本地和 CI 环境。
+- Backend Job 在全新 GitHub Runner 的 MySQL 初始化阶段退出。完整日志确认：初始化脚本被官方 entrypoint source 后，脚本的 `set -u` 泄漏到 entrypoint，后续读取可选变量 `MYSQL_ONETIME_PASSWORD` 时触发 `unbound variable`。已移除 nounset，仅保留 `set -e`，并保留 Compose 启动失败日志。
 
 | 时间 | 现象 | 处理 |
 |---|---|---|

@@ -9,7 +9,7 @@
 - 项目名称：HomePilot
 - 最近确认：用户已通过 uv 安装 Python 3.12；所有安装与 Git 命令由用户手动执行。
 - 最近确认：采用“稳定大版本 + 锁文件固定精确版本”的依赖策略。
-- 当前模块：Task 6 Console 登录与商家/平台身份展示（已完成内部实现、workspace 回归与用户集中验收，等待独立 Commit/PR）。
+- 当前模块：工程 CI 流水线（方案 A 已实现并通过本地等价回归，正在进行代码讲解与复述验收；通过后才进入 Commit/PR 和 GitHub Actions 首次运行）。
 - 当前阻塞：无；本模块未新增第三方依赖，Storefront 已接入共享 auth-client workspace 包。
 
 ## 技术栈与版本基线
@@ -142,12 +142,28 @@
 - [x] 行为测试覆盖匿名、注册、登录失败、启动恢复、退出成功与退出网络失败。
 - [x] 用户集中验收并完成 Task 5 完整 UI 闭环独立 Commit/PR；PR 已合并。
 
-## 下一模块：Console 登录、商家/平台身份展示（Task 6）
+## 已完成模块：Console 登录、商家/平台身份展示（Task 6）
 
 - [x] 用户确认本地 `main` 已包含 Storefront UI 合并结果，并创建 Console 特性分支。
 - [x] 说明并确认 Console UI 选型、普通顾客无控制台权限提示和测试边界。
 - [x] 复用 `@homepilot/auth-client`，实现 Console 内存会话 store、登录、启动恢复、身份摘要和退出。
 - [x] Console 行为测试、TypeScript、ESLint 和 Vite production build 已由助手通过；用户已完成前端 workspace 最终验收。
+- [x] 用户完成 Console Commit/PR，PR 已合并，`main` 已同步。
+
+## 下一模块：身份演示种子数据与前后端联调（Task 7）
+
+- [ ] 先说明种子账号、密码来源、幂等策略和联调验收边界，获得用户确认后再编码。
+- [ ] 种子数据只写入本地演示记录，不覆盖已有业务账号，不输出密码。
+- [ ] 联调覆盖 Storefront、Console、认证 API 与租户身份展示。
+
+## CI 流水线决策
+
+- [x] 确认项目需要 GitHub Actions CI，作为 PR 合并门禁和回归记录。
+- [x] 创建 CI workflow：后端 `uv sync --locked` + pytest + Ruff，前端 `pnpm install --frozen-lockfile` + test + build + lint。
+- [x] 本地等价回归：后端 65 tests/Ruff、前端 workspace test/build/lint、Compose config 均通过。
+- [x] 首次 CI 失败修复：按 pnpm 11.9 使用 `allowBuilds: { esbuild: true }`；增强 MySQL 测试用户初始化；启动失败时输出 Compose 服务日志。
+- [ ] 推送修复后确认 GitHub Runner 的 MySQL 初始化通过；若仍失败，以自动打印的容器内部日志继续定位。
+- [ ] CI 稳定后，再评估 Docker Compose/MySQL/Redis 集成 job 与 nightly Agent 评测；不把外部模型延迟作为 PR 硬门槛。
 
 ## 已完成模块：Principal、TenantContext 与 Repository 硬隔离（Task 4）
 
@@ -170,6 +186,7 @@
 6. 预期必然失败的 TDD Red、诊断命令和静态探针由助手执行并记录；用户主要执行 Green、阶段回归、安装/Docker 状态变更和 Git 命令，且每条用户命令都说明目录、作用与预期结果。
 7. 同一小模块内连续的 Green 测试和静态检查应合并为一组命令交给用户执行；助手在内部仍按单个行为完成 Red→Green，避免未验证改动累积。
 8. 每个独立模块的 PR 合并后，或用户主动要求更新时，必须同步更新 `HANDOFF.md` 与 `docs/handover/`；交接内容以最新已验证和已合并状态为准，不能继续描述已完成模块为“待开发”。
+9. 每个独立模块必须经过“四步学习协议”：编码前概念课（生活化类比、代码语境、推荐与 2～3 个未选方案；用户明确“真的听懂了”后才编码）、纵向 TDD 开发、完成后按数据流代码讲解、生成 5 题复述材料与参考答案（2 个是什么、2 个为什么、1 个如果……会怎样）。材料只记录到被 `.gitignore` 排除的 `.learning/`；用户可自主复述，但不阻塞后续开发、Commit 或 PR。
 
 ## 未来上线的强制前置检查
 

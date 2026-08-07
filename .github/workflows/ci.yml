@@ -1,0 +1,101 @@
+name: HomePilot CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      APP_ENV: test
+      APP_DEBUG: false
+      AUTH_JWT_SECRET: ci-only-test-secret-not-for-production
+      DATABASE_URL: mysql+asyncmy://homepilot:change-me-local@127.0.0.1:3306/homepilot
+      TEST_DATABASE_URL: mysql+asyncmy://homepilot:change-me-local@127.0.0.1:3306/homepilot_test
+      REDIS_URL: redis://127.0.0.1:6379/0
+      CELERY_BROKER_URL: redis://127.0.0.1:6379/1
+      CELERY_RESULT_BACKEND: redis://127.0.0.1:6379/2
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Sync locked backend environment
+        working-directory: backend
+        run: uv sync --locked --all-groups
+
+      - name: Start MySQL and Redis
+        run: |
+          if docker compose -f docker-compose.yml up -d --wait --wait-timeout 120 mysql redis; then
+            exit 0
+          fi
+          docker compose -f docker-compose.yml ps -a
+          docker compose -f docker-compose.yml logs --no-color mysql redis
+          exit 1
+
+      - name: Run backend tests
+        working-directory: backend
+        run: uv run pytest -q
+
+      - name: Run Ruff
+        working-directory: backend
+        run: uv run ruff check .
+
+      - name: Tear down backend services
+        if: ${{ always() }}
+        run: docker compose -f docker-compose.yml down -v
+
+  frontend:
+    name: frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.14.1
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install locked frontend dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Run frontend tests
+        working-directory: frontend
+        run: pnpm run test
+
+      - name: Build frontend applications
+        working-directory: frontend
+        run: pnpm run build
+
+      - name: Run frontend lint
+        working-directory: frontend
+        run: pnpm run lint

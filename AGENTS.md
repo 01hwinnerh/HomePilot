@@ -4,7 +4,7 @@
 
 Before making any implementation decision, read `HANDOFF.md`. It is the root-level entry point for the current project state, user collaboration rules, and the detailed session handoff.
 
-After every independent module's PR is merged, update `HANDOFF.md` and `docs/handover/` with the new branch/merge state before starting the next module. Also update them immediately when the user explicitly requests a handoff refresh. These files must describe the latest verified state, not the original implementation plan.
+Before creating an independent module's PR, update `HANDOFF.md`, `docs/handover/`, and the related plan/progress files with the latest verified capability, tests, and next-step context, and include those updates in the same PR. Do not record volatile branch or PR merge state in these files; GitHub and Git history are the source of truth for that state. Also update them immediately when the user explicitly requests a handoff refresh. These files must describe the latest verified state, not the original implementation plan.
 
 ## Mandatory Learning Collaboration Protocol
 

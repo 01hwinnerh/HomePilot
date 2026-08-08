@@ -14,8 +14,8 @@
 - Storefront 顾客认证闭环已合并，覆盖登录、注册、启动恢复和退出；相关测试、计划与交接记录已同步。
 - Console 登录、商家/平台身份展示 PR 已合并；本地 `main` 已同步且工作区干净。
 - GitHub Actions CI PR 已合并；首次真实 GitHub Runner 的 `backend` 与 `frontend` Job 均已通过。
-- 当前状态：Task 7 身份演示种子与认证联调修复已完成；后端 78 tests、Ruff、前端 test/build/lint 与用户 Storefront/Console 手动联调均通过。本模块等待独立 Commit/PR。
-- 当前分支：`test/identity-demo-seed`；此前 CI 合并后的状态记录也应与本模块一起提交。
+- 当前状态：Task 7 身份演示种子与认证联调修复已合并；后端 78 tests、Ruff、前端 test/build/lint 与用户 Storefront/Console 手动联调均通过。下一模块开始前由用户自行切回并同步本地 `main`。
+- 当前分支：Task 7 的 `test/identity-demo-seed` 已合并；当前本地分支状态由用户自行确认，Agent 不执行 Git 命令。
 
 ## 恢复开发的固定顺序
 

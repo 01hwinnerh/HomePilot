@@ -57,6 +57,7 @@
 - 用户联调发现刷新后匿名、Console 商家 memberships 为空、重复登录触发 429；已完成根因诊断并经用户审批生产导向修复方案。
 - TDD 修复切片完成：demo 邮箱改为标准 `.dev` 并迁移旧 `.local` 固定记录；refresh/CSRF Cookie Path 分离；Console login/refresh 后调用 `/me`；认证限流拆分 IP 请求桶与失败凭据桶，成功登录清零失败计数并返回 `Retry-After`。
 - 定向与全量验证通过：后端 78 tests、Ruff；前端 workspace test/build/lint。用户已重新执行 seed，并确认 Storefront、Console、刷新恢复、商户与平台身份页面均呈现预期结果；Task 7 等待独立 Commit/PR。
+- 用户已完成 Task 7 的独立 Pull Request 合并；后续开始新模块前，需由用户自行切回并同步本地 `main`。
 
 - 用户已确认 Task 7 种子身份模块设计。采用可测试的领域服务 + 薄 CLI：固定演示邮箱/商家名、密码仅来自未提交 `.env` 的 `DEMO_SEED_PASSWORD`、重复执行幂等、冲突不覆盖。
 - 纵向 TDD 已完成三条数据行为：首次创建最小身份集合、二次执行不重复、既有固定标识的权限结构不符时拒绝且保持原记录。随后完成缺失/空演示密码拒绝回归。

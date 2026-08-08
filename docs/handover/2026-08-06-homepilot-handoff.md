@@ -86,9 +86,7 @@ pnpm --filter @homepilot/auth-client lint   # passed
 
 ## 5. 恢复开发时的下一步（必须先讨论）
 
-Console 登录、商家/平台身份展示 PR 已合并。当前模块是 **GitHub Actions CI 方案 A**：workflow 已实现并通过本地等价回归，学习材料已生成；用户选择不以复述阻塞流程，现可独立 Commit/PR 并观察首次 GitHub Actions 运行。不要同时开始商品或订单业务。
-
-Console 必须复用 `@homepilot/auth-client`，但独立维护 UI store。它只展示后端 `/me` 返回的邮箱、`memberships` 和平台管理员标识，不能从 JWT 或前端参数伪造商家权限。开始前向用户说明并确认 Console 的界面方案、测试边界和无控制台权限的普通顾客提示策略。
+Console 登录、商家/平台身份展示与 **GitHub Actions CI 方案 A** 的 PR 均已合并。CI 首次真实 GitHub Runner 已验证 `backend`、`frontend` 两个 Job 通过。当前分支为 `test/identity-demo-seed`，Task 7 已完成：种子邮箱已改为标准 `.dev` 并支持旧 `.local` 固定标识安全迁移，refresh/CSRF Cookie Path 已拆分，Console login/refresh 已通过 `/me` 恢复 memberships，认证限流已拆为 IP 请求桶与失败凭据桶。后端 78 tests、Ruff、前端 test/build/lint 与用户浏览器联调均通过，等待独立 Commit/PR。
 
 ## 6. 后续身份模块路线
 
@@ -96,13 +94,12 @@ Console 必须复用 `@homepilot/auth-client`，但独立维护 UI store。它�
 
 剩余顺序：
 
-1. 完成 GitHub Actions CI PR 门禁并合并；
-2. 可重复演示种子数据与端到端联调（Task 7）；
-3. 再进入商家、商品、库存、订单、策略、知识库、RAG 与 Agent 阶段。
+1. 可重复演示种子数据与端到端联调（Task 7）；
+2. 再进入商家、商品、库存、订单、策略、知识库、RAG 与 Agent 阶段。
 
 ## 6.1 CI 当前状态
 
-`.github/workflows/ci.yml` 已实现：每个指向 `main` 的 PR 运行锁文件安装、后端 pytest/Ruff、前端 test/build/lint；合并到 `main` 后也会留下最终检查记录。首次 PR 发现前端 pnpm 配置错误和后端 MySQL 初始化失败：前端已修复，后端已增加初始化防护与失败日志，等待修复推送后的下一次运行。代码讲解、复述题和参考答案已写入 `.learning/`；用户选择不以复述阻塞 Commit/PR。
+`.github/workflows/ci.yml` 已合并：每个指向 `main` 的 PR 运行锁文件安装、后端 pytest/Ruff、前端 test/build/lint；合并到 `main` 后也会留下最终检查记录。首次 Runner 发现并修复 pnpm 构建脚本批准、workspace ESLint 声明、MySQL entrypoint shell 选项泄漏和 health 测试环境断言问题；最终 `backend`、`frontend` 两个 Job 均通过。代码讲解、复述题和参考答案已写入 `.learning/`。
 
 每一个独立、可在 Commit 信息中清楚说明的模块都必须先生成完整学习材料，再单独 Commit/PR；用户复述是可选学习环节，禁止把不相关功能塞入同一提交。
 

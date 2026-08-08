@@ -3,7 +3,7 @@ import { create } from "zustand";
 import { AuthClient } from "@homepilot/auth-client";
 import type { AuthResponse, AuthUser } from "@homepilot/auth-client";
 
-export type ConsoleAuthRestoreClient = Pick<AuthClient, "refresh">;
+export type ConsoleAuthRestoreClient = Pick<AuthClient, "refresh" | "me">;
 
 export type ConsoleAuthState = {
   status: "loading" | "anonymous" | "authenticated";
@@ -37,7 +37,9 @@ export function createConsoleAuthStore(authClient: ConsoleAuthRestoreClient) {
 
       const currentPromise = (async () => {
         try {
-          setAuthenticated(await authClient.refresh());
+          const response = await authClient.refresh();
+          const user = await authClient.me(response.access_token);
+          setAuthenticated({ ...response, user });
         } catch {
           setAnonymous();
         }

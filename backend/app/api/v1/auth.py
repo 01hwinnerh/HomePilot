@@ -44,30 +44,32 @@ def _invalid_credentials() -> HTTPException:
     return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
 
-def _too_many_requests() -> HTTPException:
+def _too_many_requests(*, retry_after_seconds: int) -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_429_TOO_MANY_REQUESTS,
         detail="Too many authentication attempts",
+        headers={"Retry-After": str(retry_after_seconds)},
     )
 
 
 def _set_auth_cookies(*, response: Response, result: AuthResult, settings: Settings) -> None:
-    cookie_options = {
+    shared_cookie_options = {
         "secure": settings.auth_cookie_secure,
         "samesite": settings.auth_cookie_same_site,
-        "path": settings.auth_cookie_path,
     }
     response.set_cookie(
         key=settings.auth_refresh_cookie_name,
         value=result.refresh_token,
         httponly=True,
-        **cookie_options,
+        path=settings.auth_cookie_path,
+        **shared_cookie_options,
     )
     response.set_cookie(
         key=settings.auth_csrf_cookie_name,
         value=result.csrf_token,
         httponly=False,
-        **cookie_options,
+        path=settings.auth_csrf_cookie_path,
+        **shared_cookie_options,
     )
 
 
@@ -80,7 +82,7 @@ def _clear_auth_cookies(*, response: Response, settings: Settings) -> None:
     )
     response.delete_cookie(
         key=settings.auth_csrf_cookie_name,
-        path=settings.auth_cookie_path,
+        path=settings.auth_csrf_cookie_path,
         secure=settings.auth_cookie_secure,
         samesite=settings.auth_cookie_same_site,
     )
@@ -107,9 +109,23 @@ async def _enforce_rate_limit(
     limiter: AuthRateLimiter,
 ) -> None:
     try:
+        await limiter.check_request(client_ip=_client_ip(request))
         await limiter.check(scope=scope, identity=identity, client_ip=_client_ip(request))
     except AuthRateLimitExceeded as error:
-        raise _too_many_requests() from error
+        raise _too_many_requests(retry_after_seconds=error.retry_after_seconds) from error
+
+
+async def _enforce_credential_rate_limit(
+    *,
+    request: Request,
+    identity: str,
+    limiter: AuthRateLimiter,
+) -> None:
+    try:
+        await limiter.check_request(client_ip=_client_ip(request))
+        await limiter.check_credentials(identity=identity, client_ip=_client_ip(request))
+    except AuthRateLimitExceeded as error:
+        raise _too_many_requests(retry_after_seconds=error.retry_after_seconds) from error
 
 
 def _require_csrf(
@@ -133,9 +149,8 @@ async def register(
     db_session: Annotated[AsyncSession, Depends(get_db_session)],
     limiter: Annotated[AuthRateLimiter, Depends(get_auth_rate_limiter)],
 ) -> AuthResponse:
-    await _enforce_rate_limit(
+    await _enforce_credential_rate_limit(
         request=request,
-        scope="credentials",
         identity=str(payload.email),
         limiter=limiter,
     )
@@ -145,11 +160,19 @@ async def register(
             email=str(payload.email), password=payload.password
         )
     except DuplicateEmail as error:
+        await limiter.record_credential_failure(
+            identity=str(payload.email),
+            client_ip=_client_ip(request),
+        )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Email already registered",
         ) from error
     _set_auth_cookies(response=response, result=result, settings=settings)
+    await limiter.clear_credential_failures(
+        identity=str(payload.email),
+        client_ip=_client_ip(request),
+    )
     return _auth_response(result)
 
 
@@ -161,9 +184,8 @@ async def login(
     db_session: Annotated[AsyncSession, Depends(get_db_session)],
     limiter: Annotated[AuthRateLimiter, Depends(get_auth_rate_limiter)],
 ) -> AuthResponse:
-    await _enforce_rate_limit(
+    await _enforce_credential_rate_limit(
         request=request,
-        scope="credentials",
         identity=payload.email,
         limiter=limiter,
     )
@@ -173,8 +195,16 @@ async def login(
             email=payload.email, password=payload.password
         )
     except InvalidCredentials as error:
+        await limiter.record_credential_failure(
+            identity=payload.email,
+            client_ip=_client_ip(request),
+        )
         raise _invalid_credentials() from error
     _set_auth_cookies(response=response, result=result, settings=settings)
+    await limiter.clear_credential_failures(
+        identity=payload.email,
+        client_ip=_client_ip(request),
+    )
     return _auth_response(result)
 
 

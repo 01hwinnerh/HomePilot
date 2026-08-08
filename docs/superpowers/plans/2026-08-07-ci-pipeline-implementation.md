@@ -75,9 +75,9 @@
 
 ### Task 4：本地审阅与 PR 验证
 
-- 审阅 Actions 权限、密钥边界、缓存 key、Job 依赖和失败行为。
-- 用户 push 后在 GitHub Actions 页面观察两个 Job 的日志。
-- 故意制造一个临时 lint 错误验证 CI 会失败；修复后恢复通过（只在特性分支进行，不合并错误）。
+- [x] 审阅 Actions 权限、密钥边界、缓存 key、Job 依赖和失败行为。
+- [x] 用户在 GitHub Actions 页面观察两个 Job 的日志；首次 Runner 发现并修复 pnpm 构建批准、workspace ESLint、MySQL entrypoint shell 选项和 health 测试环境断言问题。
+- [x] 修复后 `backend` 与 `frontend` 两个 Job 均通过，CI PR 已合并。
 
 ### Task 5：启用 main 分支保护
 

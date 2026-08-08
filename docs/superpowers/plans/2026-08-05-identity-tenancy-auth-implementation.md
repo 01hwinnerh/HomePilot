@@ -745,25 +745,28 @@
 **文件：**
 
 - 新建：`scripts/seed_identity_demo_data.py`
+- 新建：`backend/app/modules/identity/demo_seed.py`
+- 新建：`backend/app/modules/identity/demo_seed_cli.py`
 - 新建：`backend/tests/integration/test_identity_seed.py`
-- 修改：`scripts/verify_stack.ps1`
+- 新建：`backend/tests/unit/test_demo_seed.py`
+- 修改：`.env.example`
 - 修改：`README.md`
 - 修改：`backend/README.md`
 - 修改：`docs/superpowers/plans/2026-08-05-identity-tenancy-auth-implementation.md`
 - 修改：`findings.md`、`progress.md`、`task_plan.md`
 
-- [ ] **Step 1: 助手写种子数据 Red 测试。**
+- [x] **Step 1: 助手写种子数据 Red 测试。**
 
   集成测试在 `homepilot_test` 中执行 seed 两次，并断言幂等：有一个平台管理员、两个启用商家、每家至少一个成员、两个成员属于不同商家；第二次执行不会产生重复 email 或重复 membership。
 
   ```python
   await seed_identity_demo_data(session)
   await seed_identity_demo_data(session)
-  assert await count_users_by_email("platform.admin@homepilot.local") == 1
+  assert await count_users_by_email("platform.admin@homepilot.dev") == 1
   assert await count_memberships() == 2
   ```
 
-- [ ] **Step 2: 助手运行 Red。**
+- [x] **Step 2: 助手运行 Red。**
 
   在 `backend` 目录执行：
 
@@ -773,9 +776,9 @@
 
   预期因 seed 模块缺失而失败；助手记录。
 
-- [ ] **Step 3: 实现安全、可重复的演示种子。**
+- [x] **Step 3: 实现安全、可重复的演示种子。**
 
-  种子只使用固定的本地展示邮箱和从环境变量读取的演示密码；若 `DEMO_SEED_PASSWORD` 缺失，脚本拒绝运行并打印不含 secret 的设置说明。执行前通过 `get_or_create` 查询 email/merchant name；数据库中仅修改标记为 HomePilot demo 的记录。脚本绝不覆盖已有密码哈希或将 demo 密码打印到日志。
+  种子只使用固定的本地展示邮箱/商家名白名单和从环境变量读取的演示密码；若 `DEMO_SEED_PASSWORD` 缺失或为空，脚本在连接业务库前拒绝运行并打印不含 secret 的设置说明。执行前通过 `get_or_create` 查询 email/merchant name；任一既有记录与预期的启用状态、平台身份或 OWNER 成员关系不符时安全失败并 rollback。脚本绝不覆盖已有密码哈希或将 demo 密码打印到日志。
 
 - [ ] **Step 4: 用户进行最终联调。**
 

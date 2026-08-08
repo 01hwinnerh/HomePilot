@@ -59,7 +59,9 @@ export function ConsoleAuthPanel() {
             setSubmitting(true);
 
             try {
-              acceptAuth(await consoleAuthClient.login({ email, password }));
+              const response = await consoleAuthClient.login({ email, password });
+              const user = await consoleAuthClient.me(response.access_token);
+              acceptAuth({ ...response, user });
             } catch (cause) {
               setError(cause instanceof AuthApiError ? cause.detail : "暂时无法完成登录，请稍后再试。");
             } finally {

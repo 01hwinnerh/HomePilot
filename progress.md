@@ -50,6 +50,17 @@
 - 用户完成 Console PR 合并，并同步 `main`、确认工作区干净。检查发现仓库目前尚未有 `.github/workflows/`，已记录 GitHub Actions CI 作为后续独立工程模块。
 - CI 方案 A 已落地到 `.github/workflows/ci.yml`：包含 pull_request/main push 触发器、最小权限、并发取消、Backend/Frontend 两个 15 分钟 Job、锁文件安装、Compose 健康等待与失败清理。
 - CI review 修正了 Compose 显式 `-f docker-compose.yml`、`--wait-timeout 120` 和小写 Job 名称；本地等价回归已通过，等待用户提交并观察 GitHub Actions。
+- CI PR 已合并。首次 GitHub Runner 验证发现并修复 pnpm esbuild 构建批准、auth-client ESLint 声明、MySQL 初始化脚本 `set -u` 泄漏和 health 测试硬编码 development 的问题；最终 backend 与 frontend Job 均通过。用户主动暂停开发，恢复时从 Task 7 概念课开始。
+
+## 2026-08-08
+
+- 用户联调发现刷新后匿名、Console 商家 memberships 为空、重复登录触发 429；已完成根因诊断并经用户审批生产导向修复方案。
+- TDD 修复切片完成：demo 邮箱改为标准 `.dev` 并迁移旧 `.local` 固定记录；refresh/CSRF Cookie Path 分离；Console login/refresh 后调用 `/me`；认证限流拆分 IP 请求桶与失败凭据桶，成功登录清零失败计数并返回 `Retry-After`。
+- 定向与全量验证通过：后端 78 tests、Ruff；前端 workspace test/build/lint。用户已重新执行 seed，并确认 Storefront、Console、刷新恢复、商户与平台身份页面均呈现预期结果；Task 7 等待独立 Commit/PR。
+
+- 用户已确认 Task 7 种子身份模块设计。采用可测试的领域服务 + 薄 CLI：固定演示邮箱/商家名、密码仅来自未提交 `.env` 的 `DEMO_SEED_PASSWORD`、重复执行幂等、冲突不覆盖。
+- 纵向 TDD 已完成三条数据行为：首次创建最小身份集合、二次执行不重复、既有固定标识的权限结构不符时拒绝且保持原记录。随后完成缺失/空演示密码拒绝回归。
+- 助手实际执行定向验证：`uv run pytest tests/unit/test_demo_seed.py tests/integration/test_identity_seed.py -q` 为 `6 passed`；相关模块和脚本通过 `compileall` 与 Ruff。尚未运行会写入业务库的 seed CLI，留待用户完成最终联调。
 
 - Task 3 已合并并同步到干净的 `main`；用户创建 `feat/tenant-context` 后进入 Task 4。
 - Task 4 完成首轮 Red→Green：Principal 从服务端 active User 构造、TenantContext 从 active membership/merchant 构造、Tenant/Platform Repository 边界、SQLAlchemy tenant scope 过滤与 FastAPI 认证依赖。

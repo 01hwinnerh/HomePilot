@@ -17,11 +17,13 @@ describe("console auth store", () => {
       },
     };
     const refresh = vi.fn().mockResolvedValue(response);
-    const store = createConsoleAuthStore({ refresh });
+    const me = vi.fn().mockResolvedValue(response.user);
+    const store = createConsoleAuthStore({ refresh, me });
 
     await store.getState().restoreSession();
 
     expect(refresh).toHaveBeenCalledOnce();
+    expect(me).toHaveBeenCalledWith("access-token");
     expect(store.getState()).toMatchObject({
       accessToken: "access-token",
       status: "authenticated",
@@ -31,7 +33,8 @@ describe("console auth store", () => {
 
   it("falls back to anonymous when session restoration fails", async () => {
     const refresh = vi.fn().mockRejectedValue(new Error("network unavailable"));
-    const store = createConsoleAuthStore({ refresh });
+    const me = vi.fn();
+    const store = createConsoleAuthStore({ refresh, me });
 
     await store.getState().restoreSession();
 
@@ -50,7 +53,13 @@ describe("console auth store", () => {
           resolveRefresh = resolve;
         }),
     );
-    const store = createConsoleAuthStore({ refresh });
+    const me = vi.fn().mockResolvedValue({
+      id: 12,
+      email: "owner@example.com",
+      is_platform_admin: false,
+      memberships: [{ merchant_id: 4, merchant_name: "榫卯之家", role: "OWNER" as const }],
+    });
+    const store = createConsoleAuthStore({ refresh, me });
 
     const firstRestore = store.getState().restoreSession();
     const secondRestore = store.getState().restoreSession();

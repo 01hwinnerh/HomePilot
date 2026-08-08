@@ -86,7 +86,7 @@ pnpm --filter @homepilot/auth-client lint   # passed
 
 ## 5. 恢复开发时的下一步（必须先讨论）
 
-Console 登录、商家/平台身份展示与 **GitHub Actions CI 方案 A** 的 PR 均已合并。CI 首次真实 GitHub Runner 已验证 `backend`、`frontend` 两个 Job 通过。当前分支为 `test/identity-demo-seed`，Task 7 已完成：种子邮箱已改为标准 `.dev` 并支持旧 `.local` 固定标识安全迁移，refresh/CSRF Cookie Path 已拆分，Console login/refresh 已通过 `/me` 恢复 memberships，认证限流已拆为 IP 请求桶与失败凭据桶。后端 78 tests、Ruff、前端 test/build/lint 与用户浏览器联调均通过，等待独立 Commit/PR。
+Console 登录、商家/平台身份展示与 **GitHub Actions CI 方案 A** 的 PR 均已合并。CI 首次真实 GitHub Runner 已验证 `backend`、`frontend` 两个 Job 通过。Task 7 也已合并：种子邮箱已改为标准 `.dev` 并支持旧 `.local` 固定标识安全迁移，refresh/CSRF Cookie Path 已拆分，Console login/refresh 已通过 `/me` 恢复 memberships，认证限流已拆为 IP 请求桶与失败凭据桶。后端 78 tests、Ruff、前端 test/build/lint 与用户浏览器联调均通过。开始下一模块前，用户需自行切回并同步本地 `main`。
 
 ## 6. 后续身份模块路线
 

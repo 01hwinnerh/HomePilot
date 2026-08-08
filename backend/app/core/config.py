@@ -45,9 +45,13 @@ class Settings(BaseSettings):
     auth_refresh_cookie_name: str = "refresh_token"
     auth_csrf_cookie_name: str = "csrf_token"
     auth_cookie_path: str = "/api/v1/auth"
+    auth_csrf_cookie_path: str = "/"
     auth_rate_limit_enabled: bool = True
     auth_rate_limit_max_attempts: int = Field(default=5, ge=1, le=100)
     auth_rate_limit_window_seconds: int = Field(default=900, ge=1, le=3600)
+    auth_request_rate_limit_max_attempts: int = Field(default=120, ge=1, le=1000)
+    auth_request_rate_limit_window_seconds: int = Field(default=60, ge=1, le=3600)
+    demo_seed_password: SecretStr | None = None
 
     @field_validator("backend_cors_origins", mode="before")
     @classmethod

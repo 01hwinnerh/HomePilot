@@ -60,7 +60,7 @@ describe("ConsoleAuthPanel", () => {
       token_type: "bearer",
       user: {
         id: 1,
-        email: "admin@homepilot.local",
+        email: "admin@homepilot.dev",
         is_platform_admin: true,
         memberships: [],
       },
@@ -69,7 +69,7 @@ describe("ConsoleAuthPanel", () => {
     render(<ConsoleAuthPanel />);
 
     expect(screen.getByText("平台管理员")).toBeTruthy();
-    expect(screen.getByText("admin@homepilot.local")).toBeTruthy();
+    expect(screen.getByText("admin@homepilot.dev")).toBeTruthy();
     expect(document.body.textContent).not.toContain("platform-token");
   });
 
@@ -83,6 +83,12 @@ describe("ConsoleAuthPanel", () => {
         is_platform_admin: false,
         memberships: [{ merchant_id: 4, merchant_name: "榫卯之家", role: "OWNER" }],
       },
+    });
+    vi.spyOn(consoleAuthClient, "me").mockResolvedValue({
+      id: 12,
+      email: "owner@example.com",
+      is_platform_admin: false,
+      memberships: [{ merchant_id: 4, merchant_name: "榫卯之家", role: "OWNER" }],
     });
     consoleAuthStore.getState().clear();
     render(<ConsoleAuthPanel />);
@@ -103,6 +109,39 @@ describe("ConsoleAuthPanel", () => {
     );
     expect(await screen.findByText("榫卯之家")).toBeTruthy();
     expect(document.body.textContent).not.toContain("merchant-token");
+  });
+
+  it("loads live memberships from /me after sign-in", async () => {
+    const login = vi.spyOn(consoleAuthClient, "login").mockResolvedValue({
+      access_token: "merchant-token",
+      token_type: "bearer",
+      user: {
+        id: 12,
+        email: "owner@example.com",
+        is_platform_admin: false,
+        memberships: [],
+      },
+    });
+    const me = vi.spyOn(consoleAuthClient, "me").mockResolvedValue({
+      id: 12,
+      email: "owner@example.com",
+      is_platform_admin: false,
+      memberships: [{ merchant_id: 4, merchant_name: "榫卯之家", role: "OWNER" }],
+    });
+    consoleAuthStore.getState().clear();
+    render(<ConsoleAuthPanel />);
+
+    fireEvent.change(screen.getByLabelText("邮箱"), {
+      target: { value: "owner@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("密码"), {
+      target: { value: "safe-password" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "登录控制台" }));
+
+    await waitFor(() => expect(login).toHaveBeenCalledOnce());
+    await waitFor(() => expect(me).toHaveBeenCalledWith("merchant-token"));
+    expect(await screen.findByText("榫卯之家")).toBeTruthy();
   });
 
   it("revokes the session and returns to the console login after logout", async () => {

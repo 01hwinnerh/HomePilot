@@ -14,7 +14,19 @@ from app.modules.merchants.models import Merchant, MerchantMember, MerchantMembe
 
 
 class NoOpRateLimiter:
+    async def check_request(self, *, client_ip: str) -> None:
+        return None
+
     async def check(self, *, scope: str, identity: str, client_ip: str) -> None:
+        return None
+
+    async def check_credentials(self, *, identity: str, client_ip: str) -> None:
+        return None
+
+    async def record_credential_failure(self, *, identity: str, client_ip: str) -> None:
+        return None
+
+    async def clear_credential_failures(self, *, identity: str, client_ip: str) -> None:
         return None
 
 
@@ -89,6 +101,7 @@ async def _register_then_read_current_identity(database_url: str) -> None:
             assert "SameSite=lax" in set_cookies[0]
             assert "csrf_token=" in set_cookies[1]
             assert "HttpOnly" not in set_cookies[1]
+            assert "Path=/;" in set_cookies[1]
 
             current_user = await client.get(
                 "/api/v1/auth/me",

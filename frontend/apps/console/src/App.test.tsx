@@ -25,10 +25,17 @@ describe("Console App", () => {
         memberships: [{ merchant_id: 4, merchant_name: "榫卯之家", role: "OWNER" }],
       },
     });
+    const me = vi.spyOn(consoleAuthClient, "me").mockResolvedValue({
+      id: 12,
+      email: "owner@example.com",
+      is_platform_admin: false,
+      memberships: [{ merchant_id: 4, merchant_name: "榫卯之家", role: "OWNER" }],
+    });
 
     render(<App />);
 
     await waitFor(() => expect(refresh).toHaveBeenCalledOnce());
+    expect(me).toHaveBeenCalledWith("access-token");
     expect(await screen.findByText("榫卯之家")).toBeTruthy();
   });
 });

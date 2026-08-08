@@ -9,6 +9,7 @@
 - `DATABASE_URL` 指向本地业务库 `homepilot`；
 - `TEST_DATABASE_URL` 指向隔离测试库 `homepilot_test`；
 - `AUTH_JWT_SECRET` 是本地随机 JWT 签名密钥，必须只写入未提交的 `.env`；可在 `backend` 目录用 `uv run python -c "import secrets; print(secrets.token_urlsafe(48))"` 生成；
+- `DEMO_SEED_PASSWORD` 只用于创建本地演示身份；必须为非空值，绝不能提交或输出到终端日志；
 - `AUTH_COOKIE_SECURE=false` 仅适用于本地 HTTP 开发。未来生产 HTTPS 部署必须设为 `true`，并使用精确的 `BACKEND_CORS_ORIGINS`，不能使用 `*`；
 - 集成测试不得在业务库中创建或清理测试数据。
 
@@ -37,6 +38,24 @@ uv run alembic revision --autogenerate -m "describe schema change"
 
 已合并的迁移文件不可修改或覆盖，应通过新 revision 演进数据库结构。
 
+## 本地演示身份
+
+在项目根目录的未提交 `.env` 设置 `DEMO_SEED_PASSWORD` 后，在本 `backend` 目录运行：
+
+```powershell
+uv run python ..\scripts\seed_identity_demo_data.py
+```
+
+该命令向业务库写入固定的本地演示记录：
+
+| 用途 | 邮箱 |
+| --- | --- |
+| 平台管理员 | `platform.admin@homepilot.dev` |
+| 商家 A OWNER | `merchant.a.owner@homepilot.dev` |
+| 商家 B OWNER | `merchant.b.owner@homepilot.dev` |
+
+三个账号共用 `.env` 中的演示密码。命令可重复执行；已有记录仅在身份、启用状态和成员角色均匹配预期时复用。遇到冲突、重复商家名称或不正确成员关系时会 rollback 并退出，不会覆盖密码或普通业务数据。
+
 ## 验证
 
 ```powershell
@@ -56,4 +75,4 @@ uv run pytest tests/unit/test_security.py tests/unit/test_database_settings.py -
 
 认证接口统一位于 `/api/v1/auth`：`POST /register`、`POST /login`、`POST /refresh`、`POST /logout` 与 `GET /me`。access token 仅通过响应 JSON 返回，供前端保存在内存中；refresh token 仅通过 `HttpOnly` Cookie 发送，数据库只保存其 SHA-256 哈希。`/me` 同时返回用户的平台管理员标志和所有“成员、商家均启用”的商家成员关系，前端只将其用于展示；后续商家操作仍会重新从数据库构建 TenantContext。
 
-`/refresh` 和 `/logout` 还必须在 `X-CSRF-Token` 请求头中带上与 `csrf_token` Cookie 一致的值。Cookie 名称与 Path 集中由 `AUTH_REFRESH_COOKIE_NAME`、`AUTH_CSRF_COOKIE_NAME`、`AUTH_COOKIE_PATH` 配置，生产环境应同时启用 HTTPS 与 `AUTH_COOKIE_SECURE=true`。
+`/refresh` 和 `/logout` 还必须在 `X-CSRF-Token` 请求头中带上与 `csrf_token` Cookie 一致的值。Cookie 名称与 Path 集中由 `AUTH_REFRESH_COOKIE_NAME`、`AUTH_CSRF_COOKIE_NAME`、`AUTH_COOKIE_PATH`、`AUTH_CSRF_COOKIE_PATH` 配置；refresh Cookie 保持 HttpOnly 且限制在认证路径，CSRF Cookie 使用根路径供前端读取。生产环境应同时启用 HTTPS 与 `AUTH_COOKIE_SECURE=true`。

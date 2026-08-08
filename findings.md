@@ -145,16 +145,31 @@
 ## Console 合并与 CI 决策（2026-08-07）
 
 - Console 登录与身份展示 PR 已合并，用户已同步 `main` 并确认工作区干净。
-- 当前仓库尚未创建 `.github/workflows/`；建议补充 GitHub Actions CI 作为 PR 门禁。
+- GitHub Actions CI 已实现并合并；首次真实 GitHub Runner 的 backend 与 frontend Job 已通过。
 - CI 第一版只运行锁文件安装、后端 pytest/Ruff、前端 test/build/lint；本地人工 push 前仍保留快速检查，CI 负责远端最终裁决和留痕。
 - 不在第一版 CI 中强制启动所有 Docker 服务或调用真实 DeepSeek/LangSmith；这些放入独立集成/nightly job，避免外部服务波动阻塞普通 PR。
 - CI review 已确认：Compose `up --wait` 会等待 `running|healthy`，现有 MySQL/Redis healthcheck 已覆盖数据库可连接前的初始化；额外设置 `--wait-timeout 120` 和 Job `timeout-minutes: 15`，防止服务或测试无限等待。
 - Compose 步骤保留在 workflow 根目录；仅 uv/pytest/Ruff 通过 `working-directory: backend` 进入后端目录，因此不会丢失根目录 `docker-compose.yml`。
 - CI review 核验：当前 `frontend/package.json` 的 workspace test 脚本最终执行 `vitest run`，不会进入 watch mode；Node 24.14.1 是本地已验证基线且被 engines `>=22 <25` 接受，暂不因时间敏感的旧版本判断降级到 Node 20/22。
 - 为降低未来维护者对工作目录的误解，workflow 的 Compose 启停命令显式指定根目录 `docker-compose.yml`。
-- CI workflow 本地等价回归已通过：后端 65 tests 与 Ruff、前端三个 workspace 的 test/build/lint，以及 `docker compose config --quiet` 均成功；GitHub Runner 首次真实运行仍需在 PR 中观察。
+- CI workflow 本地等价回归已通过：后端 65 tests 与 Ruff、前端三个 workspace 的 test/build/lint，以及 `docker compose config --quiet` 均成功；首次真实 GitHub Runner 已完成并通过。
 
 ## 错误记录
+
+## 认证联调修复发现（2026-08-08）
+
+- `EmailStr` 会拒绝 `.local` special-use 域名；最终没有放宽正式邮箱校验，而是把三个固定本地 demo 标识改为标准 `homepilot.dev`，并在 seed 中对旧 `.local` 记录做精确、无覆盖迁移。若新旧邮箱同时存在则冲突并 rollback。
+- refresh Cookie 与 CSRF Cookie 不能共用 Path：refresh 继续限制为 `/api/v1/auth`，CSRF 改为 `/`，否则前端页面无法读取 CSRF 值，启动 refresh 会收到 403 并被前端安全地转换为匿名状态。
+- Console 的 login/refresh 响应不应被视为商家授权事实；Console 现在取得 access token 后调用 `/me`，以数据库实时返回的 active memberships 展示商家与角色。
+- 认证限流拆为 IP 请求总量桶和失败凭据桶：失败密码才增加后者，成功登录清零；refresh 保持独立 token-hash 桶。429 通过 `Retry-After` 告知客户端等待窗口。
+- 后端认证全量回归为 78 tests，Ruff 通过；前端 workspace test/build/lint 全部通过。Node ESM 与 Starlette 上游弃用警告仍为非阻塞既存警告。
+
+## 本地身份演示种子发现（2026-08-08）
+
+- 演示 seed 采用固定邮箱与商家名白名单，而非新增 `is_demo` 数据库字段：避免为本地展示需求引入迁移；同名记录不满足预期结构时安全拒绝，绝不“修正”或覆盖原有账号。
+- 种子业务规则在 `app.modules.identity.demo_seed`，外层脚本只负责 CLI 启动；集成测试因此可使用隔离的 `homepilot_test` 直接验证真实 MySQL 行为，不会测试或写入业务库。
+- `DEMO_SEED_PASSWORD` 是可选 `SecretStr` setting，但 CLI 要求它非空；密码只在进程内传给 Argon2 哈希，不进入数据库明文字段、日志、异常或命令输出。
+- `verify_stack.ps1` 保持只读验证，不调用 seed；否则每次回归都会修改业务库，破坏验证脚本的可预测性。
 
 ## GitHub Actions 首次运行发现（2026-08-07）
 

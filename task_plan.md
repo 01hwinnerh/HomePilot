@@ -9,8 +9,8 @@
 - 项目名称：HomePilot
 - 最近确认：用户已通过 uv 安装 Python 3.12；所有安装与 Git 命令由用户手动执行。
 - 最近确认：采用“稳定大版本 + 锁文件固定精确版本”的依赖策略。
-- 当前模块：工程 CI 流水线（方案 A 已实现并通过本地等价回归，正在进行代码讲解与复述验收；通过后才进入 Commit/PR 和 GitHub Actions 首次运行）。
-- 当前阻塞：无；本模块未新增第三方依赖，Storefront 已接入共享 auth-client workspace 包。
+- 当前状态：工程 CI 流水线已合并；Task 7 种子服务与认证联调修复及浏览器验收均已完成，等待独立 Commit/PR。
+- 当前阻塞：无技术阻塞。
 
 ## 技术栈与版本基线
 
@@ -150,11 +150,17 @@
 - [x] Console 行为测试、TypeScript、ESLint 和 Vite production build 已由助手通过；用户已完成前端 workspace 最终验收。
 - [x] 用户完成 Console Commit/PR，PR 已合并，`main` 已同步。
 
-## 下一模块：身份演示种子数据与前后端联调（Task 7）
+## 当前模块：身份演示种子数据与前后端联调（Task 7）
 
-- [ ] 先说明种子账号、密码来源、幂等策略和联调验收边界，获得用户确认后再编码。
-- [ ] 种子数据只写入本地演示记录，不覆盖已有业务账号，不输出密码。
-- [ ] 联调覆盖 Storefront、Console、认证 API 与租户身份展示。
+- [x] 已说明种子账号、密码来源、幂等策略和联调验收边界；用户明确确认后编码。
+- [x] Red→Green：固定演示标识创建 1 个平台管理员、2 个启用商家、2 个 OWNER 成员；第二次运行不会创建重复记录。
+- [x] Red→Green：`DEMO_SEED_PASSWORD` 缺失或为空时拒绝；既有同名标识的结构不符时拒绝且不覆盖密码或已有数据。
+- [x] 新增本地 CLI 与示例配置；命令不打印密码，冲突时 rollback。定向单元/集成回归 `6 passed`，Ruff 通过。
+- [x] 将演示邮箱改为标准 `homepilot.dev`；seed 只迁移三个精确旧 `.local` 标识，目标冲突时拒绝并 rollback。
+- [x] refresh/CSRF Cookie Path 分离；CSRF Cookie 根路径可供双前端读取，refresh Cookie 仍限制在认证 API 路径。
+- [x] Console 登录与启动恢复后调用 `/me`，展示实时启用商家 memberships 和平台标识。
+- [x] 认证限流拆分 IP 请求总量桶与失败凭据桶；成功登录清除失败计数并返回 `Retry-After`。
+- [x] 用户重新执行本地 seed 并完成 Storefront、Console、刷新恢复、商户 A/B 与平台身份手工联调。
 
 ## CI 流水线决策
 
@@ -162,7 +168,8 @@
 - [x] 创建 CI workflow：后端 `uv sync --locked` + pytest + Ruff，前端 `pnpm install --frozen-lockfile` + test + build + lint。
 - [x] 本地等价回归：后端 65 tests/Ruff、前端 workspace test/build/lint、Compose config 均通过。
 - [x] 首次 CI 失败修复：按 pnpm 11.9 使用 `allowBuilds: { esbuild: true }`；增强 MySQL 测试用户初始化；启动失败时输出 Compose 服务日志。
-- [ ] 推送修复后确认 GitHub Runner 的 MySQL 初始化通过；若仍失败，以自动打印的容器内部日志继续定位。
+- [x] GitHub Runner 首次完整验证：修复后 MySQL 初始化、后端测试/Ruff、前端 frozen install/test/build/lint 均通过。
+- [ ] 在 GitHub Settings 配置 `backend`、`frontend` 为 main 的 required checks，并限制直接 push；这是外部仓库设置，未在本模块自动执行。
 - [ ] CI 稳定后，再评估 Docker Compose/MySQL/Redis 集成 job 与 nightly Agent 评测；不把外部模型延迟作为 PR 硬门槛。
 
 ## 已完成模块：Principal、TenantContext 与 Repository 硬隔离（Task 4）

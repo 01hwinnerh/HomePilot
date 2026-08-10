@@ -8,14 +8,14 @@
 
 - 项目：HomePilot，多商家精品家居平台 + 可审计 RAG/Agent 客服。
 - 已合并：工程骨架、Docker 基础设施、数据库/Alembic、身份数据模型、认证 API、租户硬隔离、GitHub Actions CI。
-- 上一次后端回归：`78 tests`，Ruff 通过；既有 Starlette `TestClient` 弃用警告暂不处理。
+- 上一次后端回归：`94 tests`，Ruff 通过；既有 Starlette `TestClient` 弃用警告暂不处理。
 - Storefront 顾客认证 UI PR 已合并；本地是否已切回并同步 `main` 由用户自行确认，不要自行执行 Git 命令。
 - `@homepilot/auth-client` 已独立合并。
 - Storefront 顾客认证闭环已合并，覆盖登录、注册、启动恢复和退出；相关测试、计划与交接记录已同步。
 - Console 登录、商家/平台身份展示 PR 已合并；本地 `main` 已同步且工作区干净。
 - GitHub Actions CI PR 已合并；首次真实 GitHub Runner 的 `backend` 与 `frontend` Job 均已通过。
-- 当前状态：Task 7 身份演示种子与认证联调修复已合并；后端 78 tests、Ruff、前端 test/build/lint 与用户 Storefront/Console 手动联调均通过。下一模块开始前由用户自行切回并同步本地 `main`。
-- 当前分支：Task 7 的 `test/identity-demo-seed` 已合并；当前本地分支状态由用户自行确认，Agent 不执行 Git 命令。
+
+- 当前状态：Task 8 商家目录基础已完成模型、迁移、商家管理 API、公开浏览 API 和双商家幂等 seed；用户已完成本地 seed 验收，工程级验证通过：后端 94 tests、Ruff、前端 test/build/lint 与 Docker 连通性均通过。下一模块需先完成商品管理/浏览 UI 或库存的概念课。
 
 ## 恢复开发的固定顺序
 

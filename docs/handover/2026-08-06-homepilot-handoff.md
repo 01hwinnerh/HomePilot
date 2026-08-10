@@ -86,16 +86,17 @@ pnpm --filter @homepilot/auth-client lint   # passed
 
 ## 5. 恢复开发时的下一步（必须先讨论）
 
-Console 登录、商家/平台身份展示与 **GitHub Actions CI 方案 A** 的 PR 均已合并。CI 首次真实 GitHub Runner 已验证 `backend`、`frontend` 两个 Job 通过。Task 7 也已合并：种子邮箱已改为标准 `.dev` 并支持旧 `.local` 固定标识安全迁移，refresh/CSRF Cookie Path 已拆分，Console login/refresh 已通过 `/me` 恢复 memberships，认证限流已拆为 IP 请求桶与失败凭据桶。后端 78 tests、Ruff、前端 test/build/lint 与用户浏览器联调均通过。开始下一模块前，用户需自行切回并同步本地 `main`。
+
+Console 登录、商家/平台身份展示与 **GitHub Actions CI 方案 A** 的 PR 均已合并。Task 7 也已合并：种子邮箱已改为标准 `.dev` 并支持旧 `.local` 固定标识安全迁移，refresh/CSRF Cookie Path 已拆分，Console login/refresh 已通过 `/me` 恢复 memberships，认证限流已拆为 IP 请求桶与失败凭据桶。Task 8 已实现目录模型、组合外键、商家目录管理 API、顾客公开浏览 API 和双商家幂等目录 seed；用户已在本地业务库完成 seed 验收，工程级验证通过：后端 94 tests、Ruff、前端 test/build/lint 与 Docker 连通性均通过。
 
 ## 6. 后续身份模块路线
 
-完整实施计划：`docs/superpowers/plans/2026-08-05-identity-tenancy-auth-implementation.md`。
+已完成身份实施计划：`docs/superpowers/plans/2026-08-05-identity-tenancy-auth-implementation.md`。当前目录设计与实施计划：`docs/superpowers/specs/2026-08-09-catalog-foundation-design.md`、`docs/superpowers/plans/2026-08-09-catalog-foundation-implementation.md`。
 
 剩余顺序：
 
-1. 可重复演示种子数据与端到端联调（Task 7）；
-2. 再进入商家、商品、库存、订单、策略、知识库、RAG 与 Agent 阶段。
+1. 选择并完成商品管理/浏览 UI 或库存模块的概念课；
+2. 再进入库存、商品管理 UI、订单、策略、知识库、RAG 与 Agent 阶段。
 
 ## 6.1 CI 当前状态
 

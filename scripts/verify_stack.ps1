@@ -79,6 +79,16 @@ try {
     if ($minioStatus -ne 200) {
         throw "MinIO health check returned HTTP $minioStatus."
     }
+
+    $elasticsearchHealth = Invoke-WebRequest -Uri "http://127.0.0.1:9200/_cluster/health"
+    if ($elasticsearchHealth.StatusCode -ne 200) {
+        throw "Elasticsearch health check returned HTTP $($elasticsearchHealth.StatusCode)."
+    }
+
+    $elasticsearchAlias = Invoke-WebRequest -Uri "http://127.0.0.1:9200/_alias/catalog-products-read"
+    if ($elasticsearchAlias.StatusCode -ne 200) {
+        throw "Elasticsearch catalog read alias returned HTTP $($elasticsearchAlias.StatusCode)."
+    }
 }
 finally {
     Pop-Location

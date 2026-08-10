@@ -1,10 +1,11 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.dependencies import get_db_session, scoped_tenant_context
+from app.modules.catalog.models import ProductStatus
 from app.modules.catalog.schemas import (
     ProductCreate,
     ProductResponse,
@@ -37,6 +38,54 @@ def _catalog_error(error: ValueError) -> HTTPException:
 
 def _service(session: AsyncSession, context: TenantContext) -> CatalogService:
     return CatalogService(session=session, context=context)
+
+
+@router.get("/stores", response_model=list[StoreResponse])
+async def list_stores(
+    context: Annotated[TenantContext, Depends(scoped_tenant_context)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=50, ge=1, le=100),
+) -> list[StoreResponse]:
+    results = await _service(session, context).list_stores(offset=offset, limit=limit)
+    return [StoreResponse.model_validate(result) for result in results]
+
+
+@router.get("/products", response_model=list[ProductResponse])
+async def list_products(
+    context: Annotated[TenantContext, Depends(scoped_tenant_context)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    category_id: int | None = Query(default=None, gt=0),
+    product_status: Annotated[ProductStatus | None, Query(alias="status")] = None,
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=50, ge=1, le=100),
+) -> list[ProductResponse]:
+    results = await _service(session, context).list_products(
+        category_id=category_id,
+        product_status=product_status,
+        offset=offset,
+        limit=limit,
+    )
+    return [ProductResponse.model_validate(result) for result in results]
+
+
+@router.get("/products/{product_id}/skus", response_model=list[SKUResponse])
+async def list_skus(
+    product_id: int,
+    context: Annotated[TenantContext, Depends(scoped_tenant_context)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=200),
+) -> list[SKUResponse]:
+    try:
+        results = await _service(session, context).list_skus(
+            product_id=product_id,
+            offset=offset,
+            limit=limit,
+        )
+    except CatalogNotFound as error:
+        raise _catalog_error(error) from error
+    return [SKUResponse.model_validate(result) for result in results]
 
 
 @router.post(
@@ -113,6 +162,7 @@ async def create_product(
     try:
         result = await _service(session, context).create_product(
             store_id=store_id,
+            category_id=payload.category_id,
             name=payload.name,
             description=payload.description,
         )
@@ -144,6 +194,7 @@ async def update_product(
     try:
         result = await _service(session, context).update_product(
             product_id=product_id,
+            category_id=payload.category_id,
             name=payload.name,
             description=payload.description,
         )

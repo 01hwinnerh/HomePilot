@@ -9,7 +9,7 @@
 - 项目名称：HomePilot
 - 最近确认：用户已通过 uv 安装 Python 3.12；所有安装与 Git 命令由用户手动执行。
 - 最近确认：采用“稳定大版本 + 锁文件固定精确版本”的依赖策略。
-- 当前状态：工程 CI 流水线与 Task 7 均已合并；Task 8 商家目录基础已完成工程级验证和本地双商家目录 seed 验收，下一步可进入商品管理/浏览 UI 或库存模块的概念课。
+- 当前状态：商品管理与商品发现 UI 模块已完成本地工程级验证；等待用户提交单一功能 Commit/PR，随后进入库存模块概念课。
 - 当前阻塞：无技术阻塞。
 
 ## 技术栈与版本基线
@@ -162,7 +162,7 @@
 - [x] 认证限流拆分 IP 请求总量桶与失败凭据桶；成功登录清除失败计数并返回 `Retry-After`。
 - [x] 用户重新执行本地 seed 并完成 Storefront、Console、刷新恢复、商户 A/B 与平台身份手工联调。
 
-## 当前模块：商家目录基础（Task 8）
+## 已完成模块：商家目录基础（Task 8）
 
 - [x] 确认 `Merchant 1:N Store 1:N Product 1:N SKU` 领域边界；SKU 不直接保存 `store_id`。
 - [x] 确认全局自增内部 ID、店铺内 slug、商家内 SKU 编码唯一、整数最小货币单位和受控规格 JSON。
@@ -174,6 +174,15 @@
 - [x] Red→Green：顾客公开目录 API；只返回启用商家/店铺下的已发布商品和启用 SKU。
 - [x] Red→Green：双商家幂等目录 seed，冲突时 rollback。
 - [x] 用户执行本地目录 seed，完成最终全量回归；后续 Console/Storefront 商品页面与库存将作为独立模块讨论。
+
+## 已完成模块：商品管理与商品发现 UI
+
+- [x] Elasticsearch 8.19 运行基线、类目迁移、Transactional Outbox、版本化索引与 alias 重建。
+- [x] Worker 按 MySQL 当前状态投影并安全重试；公开搜索回 MySQL 二次过滤。
+- [x] 公开类目、搜索、详情 API 与商家目录列表 API。
+- [x] Storefront 商品发现/详情，Console 商品与 SKU 管理工作台。
+- [x] 项目级 `verify_stack.ps1`：后端 121 tests、Ruff、前端 build/test/lint 和五项本地基础设施均通过。
+- [ ] 用户创建单一功能 Commit/PR；合并后刷新本交接文件和详细交接文档。
 
 ## CI 流水线决策
 

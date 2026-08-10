@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from alembic import command
 
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
-CATALOG_TABLES = {"stores", "products", "skus"}
+CATALOG_TABLES = {"categories", "stores", "products", "skus", "outbox_events"}
 
 
 @pytest.fixture
@@ -33,6 +33,27 @@ def test_catalog_migration_creates_all_tables_and_relationship_columns(
     migrated_catalog_database_url: str,
 ) -> None:
     assert asyncio.run(read_catalog_tables(migrated_catalog_database_url)) == CATALOG_TABLES
+    assert asyncio.run(read_columns(migrated_catalog_database_url, "categories")) >= {
+        "id",
+        "parent_id",
+        "slug",
+        "name",
+        "sort_order",
+        "is_active",
+        "created_at",
+        "updated_at",
+    }
+    assert asyncio.run(read_columns(migrated_catalog_database_url, "outbox_events")) >= {
+        "id",
+        "event_type",
+        "aggregate_type",
+        "aggregate_id",
+        "payload",
+        "occurred_at",
+        "published_at",
+        "attempts",
+        "last_error",
+    }
     assert asyncio.run(read_columns(migrated_catalog_database_url, "stores")) >= {
         "id",
         "merchant_id",
@@ -46,6 +67,7 @@ def test_catalog_migration_creates_all_tables_and_relationship_columns(
         "id",
         "merchant_id",
         "store_id",
+        "category_id",
         "name",
         "description",
         "status",
@@ -86,7 +108,7 @@ async def read_catalog_tables(database_url: str) -> set[str]:
                 text(
                     "SELECT table_name FROM information_schema.tables "
                     "WHERE table_schema = DATABASE() AND table_name IN "
-                    "('stores', 'products', 'skus')"
+                    "('categories', 'stores', 'products', 'skus', 'outbox_events')"
                 )
             )
             return set(result.scalars().all())

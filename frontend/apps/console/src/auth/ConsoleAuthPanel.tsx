@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 import { AuthApiError } from "@homepilot/auth-client";
 
 import { consoleAuthClient, consoleAuthStore } from "./store";
+import { CatalogWorkspace } from "../catalog/CatalogWorkspace";
 
 const roleLabels = {
   OWNER: "店主",
@@ -12,6 +13,7 @@ const roleLabels = {
 export function ConsoleAuthPanel() {
   const status = consoleAuthStore((state) => state.status);
   const user = consoleAuthStore((state) => state.user);
+  const accessToken = consoleAuthStore((state) => state.accessToken);
   const acceptAuth = consoleAuthStore((state) => state.acceptAuth);
   const clear = consoleAuthStore((state) => state.clear);
   const [email, setEmail] = useState("");
@@ -127,6 +129,9 @@ export function ConsoleAuthPanel() {
               </article>
             ))}
           </div>
+        )}
+        {accessToken !== null && user.memberships.length > 0 && (
+          <CatalogWorkspace token={accessToken} memberships={user.memberships} />
         )}
       </section>
     </main>

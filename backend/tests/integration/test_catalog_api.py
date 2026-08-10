@@ -2,6 +2,8 @@ import asyncio
 from collections.abc import AsyncIterator
 
 import httpx
+import pytest
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.api.v1.auth import get_auth_rate_limiter
@@ -11,6 +13,7 @@ from app.core.security import hash_password
 from app.main import app
 from app.modules.catalog.models import SKU, Product, ProductStatus, Store
 from app.modules.merchants.models import Merchant, MerchantMember, MerchantMemberRole
+from app.shared.outbox.models import OutboxEvent
 
 
 class NoOpRateLimiter:
@@ -40,6 +43,34 @@ def test_public_catalog_only_returns_published_products_from_active_storefronts(
     migrated_identity_database_url: str,
 ) -> None:
     asyncio.run(_public_catalog_filters_hidden_products(migrated_identity_database_url))
+
+
+def test_catalog_outbox_event_rolls_back_with_business_transaction(
+    migrated_identity_database_url: str,
+) -> None:
+    asyncio.run(_catalog_outbox_rolls_back(migrated_identity_database_url))
+
+
+async def _catalog_outbox_rolls_back(database_url: str) -> None:
+    engine = create_async_engine(database_url)
+    session_factory = async_sessionmaker(engine, expire_on_commit=False)
+    try:
+        async with session_factory() as session:
+            with pytest.raises(RuntimeError):
+                async with session.begin():
+                    session.add(
+                        OutboxEvent(
+                            event_type="catalog.product.changed",
+                            aggregate_type="product",
+                            aggregate_id=99,
+                            payload={},
+                        )
+                    )
+                    raise RuntimeError("force transaction rollback")
+
+            assert await session.scalar(select(func.count()).select_from(OutboxEvent)) == 0
+    finally:
+        await engine.dispose()
 
 
 async def _member_can_create_store(database_url: str) -> None:
@@ -108,6 +139,7 @@ async def _member_can_create_store(database_url: str) -> None:
                 headers={"Authorization": f"Bearer {token}"},
                 json={
                     "store_id": store_id,
+                    "category_id": 1,
                     "name": "Dining Table",
                     "description": "Solid wood table",
                 },
@@ -137,6 +169,23 @@ async def _member_can_create_store(database_url: str) -> None:
             assert published.status_code == 200
             assert published.json()["status"] == "PUBLISHED"
 
+            stores = await client.get(
+                f"/api/v1/merchants/{merchant.id}/stores",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            products = await client.get(
+                f"/api/v1/merchants/{merchant.id}/products",
+                params={"status": "PUBLISHED", "category_id": 1},
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            skus = await client.get(
+                f"/api/v1/merchants/{merchant.id}/products/{product_id}/skus",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            assert [store["id"] for store in stores.json()] == [store_id]
+            assert [product["id"] for product in products.json()] == [product_id]
+            assert [sku["sku_code"] for sku in skus.json()] == ["TABLE-WALNUT"]
+
             async with session_factory() as session:
                 merchant_b = Merchant(name="Merchant B", is_active=True)
                 session.add(merchant_b)
@@ -151,6 +200,7 @@ async def _member_can_create_store(database_url: str) -> None:
                 product_b = Product(
                     merchant_id=merchant_b.id,
                     store_id=store_b.id,
+                    category_id=1,
                     name="Merchant B Product",
                     description="B only",
                     status=ProductStatus.DRAFT,
@@ -204,6 +254,7 @@ async def _public_catalog_filters_hidden_products(database_url: str) -> None:
             published = Product(
                 merchant_id=merchant.id,
                 store_id=store.id,
+                category_id=1,
                 name="Published Table",
                 description="Visible",
                 status=ProductStatus.PUBLISHED,
@@ -211,6 +262,7 @@ async def _public_catalog_filters_hidden_products(database_url: str) -> None:
             draft = Product(
                 merchant_id=merchant.id,
                 store_id=store.id,
+                category_id=1,
                 name="Draft Table",
                 description="Hidden",
                 status=ProductStatus.DRAFT,
@@ -218,6 +270,7 @@ async def _public_catalog_filters_hidden_products(database_url: str) -> None:
             hidden = Product(
                 merchant_id=hidden_merchant.id,
                 store_id=hidden_store.id,
+                category_id=1,
                 name="Hidden Merchant Table",
                 description="Hidden",
                 status=ProductStatus.PUBLISHED,

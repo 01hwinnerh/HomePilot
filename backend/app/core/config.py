@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 from typing import Annotated, Literal
+from urllib.parse import urlparse
 
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
@@ -35,6 +36,15 @@ class Settings(BaseSettings):
         "mysql+asyncmy://homepilot:change-me-local@127.0.0.1:3306/homepilot_test"
     )
     redis_url: str = "redis://127.0.0.1:6379/0"
+    elasticsearch_url: str = "http://127.0.0.1:9200"
+    elasticsearch_index_alias: str = Field(
+        default="catalog-products-read",
+        min_length=1,
+        max_length=255,
+        pattern=r"^[a-z0-9][a-z0-9._-]*$",
+    )
+    elasticsearch_request_timeout_seconds: float = Field(default=2, gt=0, le=30)
+    elasticsearch_max_retries: int = Field(default=3, ge=0, le=5)
     auth_jwt_secret: SecretStr
     auth_jwt_issuer: str = "homepilot-api"
     auth_jwt_algorithm: Literal["HS256"] = "HS256"
@@ -63,6 +73,14 @@ class Settings(BaseSettings):
         if "*" in origins:
             raise ValueError("BACKEND_CORS_ORIGINS must not contain '*'.")
         return origins
+
+    @field_validator("elasticsearch_url")
+    @classmethod
+    def validate_elasticsearch_url(cls, value: str) -> str:
+        parsed = urlparse(value)
+        if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+            raise ValueError("ELASTICSEARCH_URL must be an absolute HTTP(S) URL.")
+        return value.rstrip("/")
 
 
 @lru_cache

@@ -5,6 +5,7 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     Enum,
+    ForeignKey,
     ForeignKeyConstraint,
     Integer,
     String,
@@ -21,6 +22,25 @@ class ProductStatus(StrEnum):
     DRAFT = "DRAFT"
     PUBLISHED = "PUBLISHED"
     ARCHIVED = "ARCHIVED"
+
+
+class Category(TimestampMixin, Base):
+    """A global, hierarchical home catalog category."""
+
+    __tablename__ = "categories"
+
+    __table_args__ = (UniqueConstraint("slug", name="uq_categories_slug"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    parent_id: Mapped[int | None] = mapped_column(
+        ForeignKey("categories.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
+    slug: Mapped[str] = mapped_column(String(160), nullable=False)
+    name: Mapped[str] = mapped_column(String(160), nullable=False)
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
 
 class Store(MerchantOwnedMixin, TimestampMixin, Base):
@@ -55,6 +75,11 @@ class Product(MerchantOwnedMixin, TimestampMixin, Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     store_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    category_id: Mapped[int] = mapped_column(
+        ForeignKey("categories.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     description: Mapped[str] = mapped_column(String(4000), nullable=False, default="")
     status: Mapped[ProductStatus] = mapped_column(

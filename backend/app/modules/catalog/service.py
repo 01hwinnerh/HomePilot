@@ -1,7 +1,8 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.catalog.models import SKU, Product, ProductStatus, Store
+from app.modules.catalog.models import SKU, Category, Product, ProductStatus, Store
+from app.shared.outbox import append_event
 from app.shared.tenancy.context import TenantContext, require_trusted_tenant_context
 
 
@@ -41,6 +42,52 @@ class CatalogService:
             raise CatalogNotFound("Store not found")
         return store
 
+    async def list_stores(self, *, offset: int, limit: int) -> list[Store]:
+        result = await self._session.scalars(
+            select(Store)
+            .where(Store.merchant_id == self._merchant_id)
+            .order_by(Store.created_at.desc(), Store.id.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        return list(result.all())
+
+    async def list_products(
+        self,
+        *,
+        category_id: int | None,
+        product_status: ProductStatus | None,
+        offset: int,
+        limit: int,
+    ) -> list[Product]:
+        conditions = [Product.merchant_id == self._merchant_id]
+        if category_id is not None:
+            conditions.append(Product.category_id == category_id)
+        if product_status is not None:
+            conditions.append(Product.status == product_status)
+        result = await self._session.scalars(
+            select(Product)
+            .where(*conditions)
+            .order_by(Product.created_at.desc(), Product.id.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        return list(result.all())
+
+    async def list_skus(self, *, product_id: int, offset: int, limit: int) -> list[SKU]:
+        await self.get_product(product_id=product_id)
+        result = await self._session.scalars(
+            select(SKU)
+            .where(
+                SKU.merchant_id == self._merchant_id,
+                SKU.product_id == product_id,
+            )
+            .order_by(SKU.id)
+            .offset(offset)
+            .limit(limit)
+        )
+        return list(result.all())
+
     async def update_store(
         self,
         *,
@@ -53,6 +100,7 @@ class CatalogService:
             store.name = name
         if is_active is not None:
             store.is_active = is_active
+        self._append_catalog_event("catalog.store.changed", "store", store.id)
         await self._session.commit()
         return store
 
@@ -60,6 +108,7 @@ class CatalogService:
         self,
         *,
         store_id: int,
+        category_id: int,
         name: str,
         description: str,
     ) -> Product:
@@ -73,9 +122,12 @@ class CatalogService:
             await self._session.rollback()
             raise CatalogNotFound("Store not found")
 
+        await self._require_active_leaf_category(category_id=category_id)
+
         product = Product(
             merchant_id=self._merchant_id,
             store_id=store_id,
+            category_id=category_id,
             name=name,
             description=description,
             status=ProductStatus.DRAFT,
@@ -98,16 +150,21 @@ class CatalogService:
         self,
         *,
         product_id: int,
+        category_id: int | None = None,
         name: str | None = None,
         description: str | None = None,
     ) -> Product:
         product = await self.get_product(product_id=product_id)
         if product.status is ProductStatus.ARCHIVED:
             raise InvalidCatalogState("Archived products cannot be edited")
+        if category_id is not None:
+            await self._require_active_leaf_category(category_id=category_id)
+            product.category_id = category_id
         if name is not None:
             product.name = name
         if description is not None:
             product.description = description
+        self._append_catalog_event("catalog.product.changed", "product", product.id)
         await self._session.commit()
         return product
 
@@ -182,6 +239,7 @@ class CatalogService:
             sku.price_minor = price_minor
         if is_active is not None:
             sku.is_active = is_active
+        self._append_catalog_event("catalog.sku.changed", "product", sku.product_id)
         await self._session.commit()
         return sku
 
@@ -218,6 +276,7 @@ class CatalogService:
             raise InvalidCatalogState("Product requires an active store and SKU")
 
         product.status = ProductStatus.PUBLISHED
+        self._append_catalog_event("catalog.product.changed", "product", product.id)
         await self._session.commit()
         return product
 
@@ -232,14 +291,50 @@ class CatalogService:
             await self._session.rollback()
             raise CatalogNotFound("Product not found")
         product.status = ProductStatus.ARCHIVED
+        self._append_catalog_event("catalog.product.changed", "product", product.id)
         await self._session.commit()
         return product
+
+    async def _require_active_leaf_category(self, *, category_id: int) -> Category:
+        category = await self._session.scalar(
+            select(Category).where(
+                Category.id == category_id,
+                Category.is_active.is_(True),
+            )
+        )
+        child = await self._session.scalar(
+            select(Category.id).where(Category.parent_id == category_id)
+        )
+        if category is None or child is not None:
+            await self._session.rollback()
+            raise InvalidCatalogState("Product requires an active leaf category")
+        return category
 
     async def _commit_created(self, instance: Store | Product | SKU) -> Store | Product | SKU:
         try:
             await self._session.flush()
+            if isinstance(instance, Store):
+                self._append_catalog_event("catalog.store.changed", "store", instance.id)
+            elif isinstance(instance, Product):
+                self._append_catalog_event("catalog.product.changed", "product", instance.id)
+            else:
+                self._append_catalog_event("catalog.sku.changed", "product", instance.product_id)
             await self._session.commit()
         except Exception:
             await self._session.rollback()
             raise
         return instance
+
+    def _append_catalog_event(
+        self,
+        event_type: str,
+        aggregate_type: str,
+        aggregate_id: int,
+    ) -> None:
+        append_event(
+            self._session,
+            event_type=event_type,
+            aggregate_type=aggregate_type,
+            aggregate_id=aggregate_id,
+            payload={},
+        )

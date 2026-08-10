@@ -178,6 +178,26 @@
 - Backend Job 后续测试失败：CI 正确注入 `APP_ENV=test`，但健康检查测试硬编码期望 `development`。运行时接口返回当前 Settings 环境的行为是正确的；已将测试改为断言 `get_settings().app_env`，同时覆盖本地和 CI 环境。
 - Backend Job 在全新 GitHub Runner 的 MySQL 初始化阶段退出。完整日志确认：初始化脚本被官方 entrypoint source 后，脚本的 `set -u` 泄漏到 entrypoint，后续读取可选变量 `MYSQL_ONETIME_PASSWORD` 时触发 `unbound variable`。已移除 nounset，仅保留 `set -e`，并保留 Compose 启动失败日志。
 
+## Elasticsearch 商品发现架构（已核验，2026-08-10）
+
+- 用户选择在商品管理/浏览 UI 模块直接引入 Elasticsearch，以学习搜索索引、CQRS、最终一致性和异步投影，而不是只使用 MySQL `LIKE` 查询。
+- 目标部署为本地 Docker Compose 新增单节点 Elasticsearch 8.x；具体镜像 tag/digest、官方 Python client 的兼容版本和 JVM heap 上限必须在实施前实际核验并由锁文件/Compose 固定。该服务会增加 Docker Desktop 内存占用，开发配置应限制 heap，生产配置另行评估多节点、高可用、快照和访问控制。
+- 已实际验证：官方 Python client 锁定 `8.19.0`；本地 Docker 返回 Elasticsearch `8.19.0`，镜像固定为 `docker.elastic.co/elasticsearch/elasticsearch@sha256:e1e66bfabae0fd03a0a36651a9bb198e7f061e0c99f457a6203b116e053e9cdb`。
+- Task 1 的真实连通性测试确认基础 `elasticsearch` 安装不包含 `AsyncElasticsearch` 所需的 `aiohttp` transport，构造客户端时报 `ValueError: You must have 'aiohttp' installed to use AiohttpHttpNode`。用户确认后，直接依赖收紧为 `elasticsearch[async]>=8.19,<8.20`：服务端镜像固定 8.19.0，客户端只允许同一 8.19 minor，并由官方 extra 声明/锁定 `aiohttp`。不采用同步 client（会阻塞 FastAPI event loop）或手写 HTTP wrapper（绕开官方异常、重试和兼容契约）。
+- MySQL 始终是商品、类目、SKU、店铺状态与公开资格的唯一真源；Console 只能写 MySQL，前端永不直接访问 Elasticsearch。Elasticsearch 仅持有可重建的搜索读模型，不承担交易、授权或库存真相。
+- 目录写入在 MySQL 事务内同时写入 Transactional Outbox 事件；异步 Worker 消费事件并以稳定文档 ID 幂等写入/删除 Elasticsearch。失败应可重试，索引重建必须可从 MySQL 全量恢复。
+- Storefront 关键词/类目搜索首先由 Elasticsearch 返回候选商品 ID 和排序；应用层必须按 MySQL 当前 Merchant/Store/Product/SKU 活动状态再次过滤并补全展示数据，避免索引同步延迟导致草稿、归档或停用店铺的商品短暂公开。
+- 未采用方案：前端拉全量后过滤（不安全且不可扩展）、只用 MySQL 模糊查询（当前足够但不满足搜索技术栈学习目标）、立即切换 OpenSearch（许可更宽松，但用户明确选择学习 Elasticsearch）。
+- Elasticsearch 的免费 Basic 使用许可、生产规模阈值和备份/恢复策略需在未来正式部署阶段单独确认；本模块只做本地开发与作品集演示所需的最小安全配置。
+
+## 商品索引重建的业务库迁移发现（2026-08-10）
+
+- Task 5 的真实 `python -m scripts.rebuild_catalog_index` 首次执行安全失败：业务库当前 Alembic revision 为 `20260809_0003`，最新 head 为 `e58366597ca1`；后者新增 `categories`、`products.category_id` 和 `outbox_events`。
+- 错误为 MySQL `1054 Unknown column 'products.category_id'`。代码和隔离测试库已按最新 metadata 工作，未修改业务数据，也未切换 Elasticsearch read alias。
+- 该问题是用户本地业务库未执行最新迁移，不是代码兼容性问题。按项目约定暂停自动迁移，等待用户在 `backend` 目录手动执行 `uv run alembic upgrade head` 后再复验重建命令。
+- 用户已完成迁移；首次重建又发现“read alias 尚不存在”时 Elasticsearch `ignore=[404]` 返回错误响应体，已修复为忽略该响应并直接创建 alias。修复后重建成功，alias 指向新的版本化索引，当前文档数为 2。
+- CI backend 首次运行商品搜索集成测试失败，根因是 workflow 只启动 MySQL/Redis，没有启动 Compose 中已存在的 Elasticsearch；已将启动命令、健康等待超时（180 秒）和失败日志改为同时覆盖 `mysql redis elasticsearch`。本地 Compose 配置和 workflow 服务断言已通过。
+
 | 时间 | 现象 | 处理 |
 |---|---|---|
 | 2026-08-04 | 自动执行 `uv python install 3.12` 时权限审批代理返回 503 | 用户改为手动执行，已完成 |

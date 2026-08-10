@@ -8,7 +8,7 @@ from app.modules.catalog.demo_seed import (
     CatalogSeedConflictError,
     seed_catalog_demo_data,
 )
-from app.modules.catalog.models import SKU, Product, Store
+from app.modules.catalog.models import SKU, Category, Product, Store
 from app.modules.merchants.models import Merchant
 
 
@@ -37,6 +37,7 @@ async def _seed_catalog_twice(database_url: str) -> None:
             await session.commit()
 
             assert await session.scalar(select(func.count()).select_from(Store)) == 2
+            assert await session.scalar(select(func.count()).select_from(Category)) == 5
             assert await session.scalar(select(func.count()).select_from(Product)) == 2
             assert await session.scalar(select(func.count()).select_from(SKU)) == 2
     finally:

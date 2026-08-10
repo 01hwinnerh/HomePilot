@@ -18,7 +18,7 @@
 | 认证 API | 已合并 | register/login/refresh rotation/logout/me、Argon2、HS256 access JWT、HttpOnly refresh Cookie、CSRF、Redis 限流与安全日志。 |
 | 租户硬隔离 | 已合并 | DB Principal、可信 `TenantContext`、显式 Repository 条件 + SQLAlchemy `with_loader_criteria` 第二道过滤、平台独立 Repository。 |
 
-上一次后端最终回归为：`65 passed`，`uv run ruff check .` 通过。Starlette `TestClient` 弃用警告是既有上游警告，当前不处理。
+最近商品发现模块最终回归为：后端 `121 passed`，`uv run ruff check .` 通过；前端 workspace test/build/lint 与 Elasticsearch/Compose 连通性均通过。Starlette `TestClient` 弃用警告和 Console Ant Design chunk 体积警告是非阻塞既存提示。
 
 ## 3. 已合并模块：Storefront 顾客认证 UI
 
@@ -86,7 +86,7 @@ pnpm --filter @homepilot/auth-client lint   # passed
 
 ## 5. 恢复开发时的下一步（必须先讨论）
 
-Console 登录、商家/平台身份展示与 **GitHub Actions CI 方案 A** 的 PR 均已合并。Task 7 也已合并：种子邮箱已改为标准 `.dev` 并支持旧 `.local` 固定标识安全迁移，refresh/CSRF Cookie Path 已拆分，Console login/refresh 已通过 `/me` 恢复 memberships，认证限流已拆为 IP 请求桶与失败凭据桶。Task 8 已实现目录模型、组合外键、商家目录管理 API、顾客公开浏览 API 和双商家幂等目录 seed；用户已在本地业务库完成 seed 验收，工程级验证通过：后端 94 tests、Ruff、前端 test/build/lint 与 Docker 连通性均通过。
+Console 登录、商家/平台身份展示与 **GitHub Actions CI 方案 A** 的 PR 均已合并。Task 7 也已合并：种子邮箱已改为标准 `.dev` 并支持旧 `.local` 固定标识安全迁移，refresh/CSRF Cookie Path 已拆分，Console login/refresh 已通过 `/me` 恢复 memberships，认证限流已拆为 IP 请求桶与失败凭据桶。Task 8 目录基础和后续商品管理/发现 UI 已在本地完成：类目、Transactional Outbox、Elasticsearch 读模型/Worker/重建、公开搜索 API、商家列表 API、Storefront 商品浏览和 Console 商品/SKU 工作台均已验证；`verify_stack.ps1` 后端 121 tests、Ruff、前端 test/build/lint 与五项基础设施检查通过。用户尚未执行本模块 Commit/PR。
 
 ## 6. 后续身份模块路线
 
@@ -94,8 +94,9 @@ Console 登录、商家/平台身份展示与 **GitHub Actions CI 方案 A** 的
 
 剩余顺序：
 
-1. 选择并完成商品管理/浏览 UI 或库存模块的概念课；
-2. 再进入库存、商品管理 UI、订单、策略、知识库、RAG 与 Agent 阶段。
+1. 用户提交当前商品管理/发现 UI 单一功能 Commit/PR；
+2. 进入库存模块概念课，再实现库存真源、预占和扣减；
+3. 继续订单、策略、知识库、RAG 与 Agent 阶段。
 
 ## 6.1 CI 当前状态
 

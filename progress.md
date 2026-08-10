@@ -1,5 +1,17 @@
 # HomePilot 开发进度日志
 
+## 2026-08-10（Task 5 索引投影）
+
+- 已完成 Red→Green：`CatalogIndexer` 根据 MySQL 当前公开状态执行 index/delete；Outbox 事件处理支持重复消费幂等、失败记录安全错误类型，并接入可重试 Celery task。
+- 已完成版本化 Elasticsearch index、bulk 写入和 read alias 原子切换；重建 CLI 只在完整 bulk 成功后切换 alias。
+- 后端定向单测、目录集成测试、全量 `pytest` 和 Ruff 均通过。
+- 真实重建命令发现业务库当前仍在 `20260809_0003`，缺少最新 `e58366597ca1` 提供的 `products.category_id`；未修改业务数据或 alias。等待用户在 `backend` 执行 `uv run alembic upgrade head` 后复验。
+- 用户已升级业务库至 `e58366597ca1 (head)`；修复首次 alias 不存在时的 Elasticsearch 404 响应边界后，真实重建成功，`catalog-products-read` 指向新版本索引，公开文档数为 2。
+- 已完成公开类目、关键词/类目搜索和商品详情 API：搜索只取 Elasticsearch 候选 ID，再从 MySQL 按公开资格二次过滤并恢复 ES 排序；ES 超时/连接失败统一返回 `503 SEARCH_UNAVAILABLE`，不退化为全量扫描。相关定向 API/服务测试与 Ruff 通过。
+- 已完成 Console 商家目录列表 API：stores/products/SKUs 均通过可信 `TenantContext` 限定商家范围，支持状态、类目和分页过滤；商家目录集成测试与 Ruff 通过。
+- 已完成 Storefront 商品发现 UI：关键词搜索、类目筛选、跨商家商品卡片、来源店铺、起售价和详情页；覆盖 loading、空结果、搜索 503、详情错误，Storefront 14 tests、build、lint 通过，并完成 Playwright 浏览器渲染检查。
+- 已完成 Console 商品管理工作台：按实时 memberships 选择商家，加载店铺/商品，支持商品创建、发布/归档和 SKU 查看/新增；Console 13 tests、build、lint 通过。Ant Design 生产 chunk 体积警告仍为既存非阻塞提示。
+
 ## 2026-08-04
 
 - `chore/project-scaffold` 已生成工程骨架：后端健康探针与测试、前端两个 Vite 应用、pnpm workspace、Docker Compose、`.env.example` 和无安装的环境检查脚本。

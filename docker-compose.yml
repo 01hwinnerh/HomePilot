@@ -34,6 +34,24 @@ services:
       timeout: 5s
       retries: 10
 
+  elasticsearch:
+    image: ${ELASTICSEARCH_IMAGE:-docker.elastic.co/elasticsearch/elasticsearch@sha256:e1e66bfabae0fd03a0a36651a9bb198e7f061e0c99f457a6203b116e053e9cdb}
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test:
+        ["CMD-SHELL", "curl --fail --silent 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=1s' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 45s
+
   qdrant:
     image: ${QDRANT_IMAGE:-qdrant/qdrant:latest}
     ports:
@@ -57,5 +75,6 @@ services:
 volumes:
   mysql_data:
   redis_data:
+  elasticsearch_data:
   qdrant_data:
   minio_data:

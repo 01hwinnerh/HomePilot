@@ -3,7 +3,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.catalog.models import SKU, Product, ProductStatus, Store
+from app.modules.catalog.models import SKU, Category, Product, ProductStatus, Store
 from app.modules.merchants.models import Merchant
 
 
@@ -16,6 +16,7 @@ DEMO_CATALOG = (
         "merchant_name": "HomePilot Demo Merchant A",
         "store_name": "HomePilot Demo Merchant A Store",
         "store_slug": "demo-merchant-a",
+        "category_slug": "dining-tables",
         "product_name": "Walnut Dining Table",
         "product_description": "A solid walnut table for the dining room.",
         "sku_code": "DEMO-A-TABLE-WALNUT",
@@ -27,6 +28,7 @@ DEMO_CATALOG = (
         "merchant_name": "HomePilot Demo Merchant B",
         "store_name": "HomePilot Demo Merchant B Store",
         "store_slug": "demo-merchant-b",
+        "category_slug": "lounge-chairs",
         "product_name": "Linen Lounge Chair",
         "product_description": "A linen lounge chair for a quiet reading corner.",
         "sku_code": "DEMO-B-CHAIR-LINEN",
@@ -36,11 +38,19 @@ DEMO_CATALOG = (
     },
 )
 
+DEMO_CATEGORIES = (
+    {"slug": "dining", "name": "Dining", "parent_slug": None, "sort_order": 20},
+    {"slug": "dining-tables", "name": "Dining Tables", "parent_slug": "dining", "sort_order": 10},
+    {"slug": "living", "name": "Living", "parent_slug": None, "sort_order": 10},
+    {"slug": "lounge-chairs", "name": "Lounge Chairs", "parent_slug": "living", "sort_order": 10},
+)
+
 
 async def seed_catalog_demo_data(session: AsyncSession) -> None:
     """Create or verify one published demo product for each demo merchant."""
 
     try:
+        categories = await _get_or_create_demo_categories(session)
         for demo in DEMO_CATALOG:
             merchant = await session.scalar(
                 select(Merchant).where(Merchant.name == demo["merchant_name"])
@@ -51,13 +61,48 @@ async def seed_catalog_demo_data(session: AsyncSession) -> None:
                 )
 
             store = await _get_or_create_store(session, merchant.id, demo)
-            product = await _get_or_create_product(session, merchant.id, store.id, demo)
+            product = await _get_or_create_product(
+                session,
+                merchant.id,
+                store.id,
+                categories[str(demo["category_slug"])].id,
+                demo,
+            )
             await _get_or_create_sku(session, merchant.id, product.id, demo)
 
         await session.flush()
     except CatalogSeedConflictError:
         await session.rollback()
         raise
+
+
+async def _get_or_create_demo_categories(session: AsyncSession) -> dict[str, Category]:
+    categories: dict[str, Category] = {}
+    for demo in DEMO_CATEGORIES:
+        slug = str(demo["slug"])
+        category = await session.scalar(select(Category).where(Category.slug == slug))
+        parent_slug = demo["parent_slug"]
+        parent_id = categories[str(parent_slug)].id if parent_slug is not None else None
+        if category is not None:
+            if (
+                category.name != demo["name"]
+                or category.parent_id != parent_id
+                or category.sort_order != demo["sort_order"]
+                or not category.is_active
+            ):
+                raise CatalogSeedConflictError(f"Existing demo category does not match: {slug}")
+        else:
+            category = Category(
+                parent_id=parent_id,
+                slug=slug,
+                name=str(demo["name"]),
+                sort_order=int(demo["sort_order"]),
+                is_active=True,
+            )
+            session.add(category)
+            await session.flush()
+        categories[slug] = category
+    return categories
 
 
 async def _get_or_create_store(
@@ -93,6 +138,7 @@ async def _get_or_create_product(
     session: AsyncSession,
     merchant_id: int,
     store_id: int,
+    category_id: int,
     demo: dict[str, object],
 ) -> Product:
     product = await session.scalar(
@@ -106,6 +152,7 @@ async def _get_or_create_product(
         if (
             product.status != ProductStatus.PUBLISHED
             or product.description != demo["product_description"]
+            or product.category_id != category_id
         ):
             raise CatalogSeedConflictError(
                 f"Existing demo product does not match: {demo['product_name']}"
@@ -115,6 +162,7 @@ async def _get_or_create_product(
     product = Product(
         merchant_id=merchant_id,
         store_id=store_id,
+        category_id=category_id,
         name=str(demo["product_name"]),
         description=str(demo["product_description"]),
         status=ProductStatus.PUBLISHED,

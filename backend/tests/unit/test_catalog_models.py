@@ -1,6 +1,6 @@
 from sqlalchemy import CheckConstraint, ForeignKeyConstraint, Table, UniqueConstraint
 
-from app.modules.catalog.models import SKU, Product, ProductStatus, Store
+from app.modules.catalog.models import SKU, Category, Product, ProductStatus, Store
 from app.shared.models.tenant import MerchantOwnedMixin
 from app.shared.models.timestamps import TimestampMixin
 
@@ -50,3 +50,16 @@ def test_product_statuses_are_limited_to_draft_published_and_archived() -> None:
         "PUBLISHED",
         "ARCHIVED",
     }
+
+
+def test_category_tree_and_product_category_foreign_key_are_explicit() -> None:
+    assert {"id", "parent_id", "slug", "name", "sort_order", "is_active"} <= {
+        column.name for column in Category.__table__.c
+    }
+    assert frozenset({"slug"}) in unique_constraint_columns(Category.__table__)
+    assert "category_id" in Product.__table__.c
+    assert any(
+        isinstance(constraint, ForeignKeyConstraint)
+        and {column.name for column in constraint.columns} == {"category_id"}
+        for constraint in Product.__table__.constraints
+    )

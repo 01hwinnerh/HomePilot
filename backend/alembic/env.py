@@ -10,6 +10,7 @@ from app.modules.catalog import models as catalog_models  # noqa: F401
 from app.modules.identity import models as identity_models  # noqa: F401
 from app.modules.merchants import models as merchant_models  # noqa: F401
 from app.shared.models.base import Base
+from app.shared.outbox import models as outbox_models  # noqa: F401
 
 config = context.config
 

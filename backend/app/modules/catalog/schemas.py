@@ -25,11 +25,13 @@ class StoreResponse(BaseModel):
 
 class ProductCreate(BaseModel):
     store_id: int = Field(gt=0)
+    category_id: int = Field(gt=0)
     name: str = Field(min_length=1, max_length=200)
     description: str = Field(default="", max_length=4000)
 
 
 class ProductUpdate(BaseModel):
+    category_id: int | None = Field(default=None, gt=0)
     name: str | None = Field(default=None, min_length=1, max_length=200)
     description: str | None = Field(default=None, max_length=4000)
 
@@ -40,6 +42,7 @@ class ProductResponse(BaseModel):
     id: int
     merchant_id: int
     store_id: int
+    category_id: int
     name: str
     description: str
     status: str
@@ -93,7 +96,23 @@ class PublicSKUResponse(BaseModel):
 
 class PublicProductResponse(BaseModel):
     id: int
+    merchant_id: int
+    merchant_name: str
     store_id: int
+    store_name: str
+    store_slug: str
+    category_id: int
+    category_name: str
     name: str
     description: str
     skus: list[PublicSKUResponse]
+
+
+class CategoryResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    parent_id: int | None
+    slug: str
+    name: str
+    sort_order: int

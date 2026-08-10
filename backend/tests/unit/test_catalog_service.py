@@ -3,7 +3,7 @@ import asyncio
 import pytest
 from pydantic import ValidationError
 
-from app.modules.catalog.models import SKU, Product, ProductStatus, Store
+from app.modules.catalog.models import SKU, Category, Product, ProductStatus, Store
 from app.modules.catalog.schemas import SKUCreate
 from app.modules.catalog.service import (
     CatalogConflict,
@@ -76,11 +76,13 @@ def test_sku_schema_rejects_negative_price() -> None:
 
 def test_new_product_starts_as_draft() -> None:
     store = Store(id=7, merchant_id=1, name="Demo Store", slug="demo-store")
-    session = RecordingSession([store])
+    category = Category(id=4, parent_id=1, slug="dining-tables", name="Dining Tables")
+    session = RecordingSession([store, category, None])
 
     product = asyncio.run(
         CatalogService(session=session, context=trusted_context()).create_product(
             store_id=7,
+            category_id=4,
             name="Dining Table",
             description="Solid wood table",
         )
@@ -89,7 +91,27 @@ def test_new_product_starts_as_draft() -> None:
     assert product.status is ProductStatus.DRAFT
     assert product.merchant_id == 1
     assert product.store_id == 7
+    assert product.category_id == 4
     assert session.committed is True
+
+
+def test_create_product_rejects_a_category_that_has_children() -> None:
+    store = Store(id=7, merchant_id=1, name="Demo Store", slug="demo-store")
+    category = Category(id=1, slug="dining", name="Dining")
+    child = Category(id=4, parent_id=1, slug="dining-tables", name="Dining Tables")
+    session = RecordingSession([store, category, child])
+
+    with pytest.raises(InvalidCatalogState, match="active leaf category"):
+        asyncio.run(
+            CatalogService(session=session, context=trusted_context()).create_product(
+                store_id=7,
+                category_id=1,
+                name="Dining Table",
+                description="Solid wood table",
+            )
+        )
+
+    assert session.rolled_back is True
 
 
 def test_create_sku_rejects_duplicate_code_within_merchant() -> None:

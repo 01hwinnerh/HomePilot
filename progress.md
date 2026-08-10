@@ -70,6 +70,15 @@
 - 第二轮复审确认无 Critical；补齐 scoped bulk delete、异常 scope reset 与并发 task ContextVar 隔离回归，并在 ADR 中准确记录 capability 的进程内威胁模型边界。等待最终全量验证与最终复审。
 - 修订后最终助手验证：`uv run pytest -q` 为 65 passed，`uv run ruff check .` 通过；保留既有 Starlette TestClient 上游弃用警告。
 
+## 2026-08-09
+
+- 用户确认并批准商家目录基础设计：`Merchant 1:N Store 1:N Product 1:N SKU`；SKU 不直接保存 `store_id`，内部 ID 使用全局自增，价格使用整数最小货币单位。
+- 按纵向 TDD 完成目录模型与迁移：新增 `stores`、`products`、`skus`，组合外键拒绝跨商家错配，revision `20260809_0003` 可升级/回滚；用户已将本地业务库迁移到 `20260809_0003 (head)`，Alembic check 无新增操作。
+- 完成目录 Schema 与可信 `TenantContext` Service：创建、更新、SKU 唯一、发布前置条件、归档状态转换和失败回滚均有测试。
+- 完成商家目录管理 API 与公开浏览 API：商家写请求复用 `scoped_tenant_context`；公开接口过滤启用商家/店铺、已发布商品和启用 SKU；跨商家路径篡改返回 404。
+- 完成两个演示商家的目录 seed：首次创建各自 Store/Product/SKU，重复执行幂等，冲突 rollback；目录定向回归为 16 passed，Ruff 通过；等待用户执行本地目录 seed 与工程级最终回归。
+- 用户已在本地业务库成功执行 `seed_catalog_demo_data.py`，输出确认 seed 可安全重复运行；工程级 `verify_stack.ps1` 通过，后端 94 tests、前端 test/build/lint 与 Docker 连通性均通过。
+
 - 认证安全原语 PR 已合并；已从更新后的 `main` 创建 `feat/identity-tenancy-models`，进入 Task 2。
 - Task 2 采用纵向 TDD 建立 `User`、`Merchant`、`MerchantMember` 与 `AuthSession`。已验证商家成员联合唯一、`OWNER/STAFF` 角色、refresh token 仅保存哈希、用户/租户/轮换链路外键、关键索引及严格反向迁移。
 - 迁移测试曾因开发中扩展未提交 revision `20260805_0002` 而保留不完整 head 状态；已重建隔离库并改造 fixture，使每次测试结束后回滚到 `base` 且断言领域表已清理，后续修改同一未提交 revision 不再污染测试库。

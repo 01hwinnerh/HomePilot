@@ -9,7 +9,7 @@
 - 项目名称：HomePilot
 - 最近确认：用户已通过 uv 安装 Python 3.12；所有安装与 Git 命令由用户手动执行。
 - 最近确认：采用“稳定大版本 + 锁文件固定精确版本”的依赖策略。
-- 当前状态：工程 CI 流水线已合并；Task 7 种子服务与认证联调修复及浏览器验收均已完成，等待独立 Commit/PR。
+- 当前状态：工程 CI 流水线与 Task 7 均已合并；Task 8 商家目录基础已完成工程级验证和本地双商家目录 seed 验收，下一步可进入商品管理/浏览 UI 或库存模块的概念课。
 - 当前阻塞：无技术阻塞。
 
 ## 技术栈与版本基线
@@ -161,6 +161,19 @@
 - [x] Console 登录与启动恢复后调用 `/me`，展示实时启用商家 memberships 和平台标识。
 - [x] 认证限流拆分 IP 请求总量桶与失败凭据桶；成功登录清除失败计数并返回 `Retry-After`。
 - [x] 用户重新执行本地 seed 并完成 Storefront、Console、刷新恢复、商户 A/B 与平台身份手工联调。
+
+## 当前模块：商家目录基础（Task 8）
+
+- [x] 确认 `Merchant 1:N Store 1:N Product 1:N SKU` 领域边界；SKU 不直接保存 `store_id`。
+- [x] 确认全局自增内部 ID、店铺内 slug、商家内 SKU 编码唯一、整数最小货币单位和受控规格 JSON。
+- [x] 编写并批准目录设计规格：`docs/superpowers/specs/2026-08-09-catalog-foundation-design.md`。
+- [x] 编写目录 TDD 实施计划：`docs/superpowers/plans/2026-08-09-catalog-foundation-implementation.md`。
+- [x] Red→Green：Store/Product/SKU ORM、组合外键、唯一约束和可逆 Alembic revision `20260809_0003`。
+- [x] Red→Green：Schema、可信 `TenantContext` 目录 Service、草稿/发布/归档状态转换和价格校验。
+- [x] Red→Green：商家目录管理 API；覆盖创建、更新、SKU、发布、归档和跨商家拒绝。
+- [x] Red→Green：顾客公开目录 API；只返回启用商家/店铺下的已发布商品和启用 SKU。
+- [x] Red→Green：双商家幂等目录 seed，冲突时 rollback。
+- [x] 用户执行本地目录 seed，完成最终全量回归；后续 Console/Storefront 商品页面与库存将作为独立模块讨论。
 
 ## CI 流水线决策
 

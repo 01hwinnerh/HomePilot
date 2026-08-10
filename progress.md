@@ -11,6 +11,7 @@
 - 已完成 Console 商家目录列表 API：stores/products/SKUs 均通过可信 `TenantContext` 限定商家范围，支持状态、类目和分页过滤；商家目录集成测试与 Ruff 通过。
 - 已完成 Storefront 商品发现 UI：关键词搜索、类目筛选、跨商家商品卡片、来源店铺、起售价和详情页；覆盖 loading、空结果、搜索 503、详情错误，Storefront 14 tests、build、lint 通过，并完成 Playwright 浏览器渲染检查。
 - 已完成 Console 商品管理工作台：按实时 memberships 选择商家，加载店铺/商品，支持商品创建、发布/归档和 SKU 查看/新增；Console 13 tests、build、lint 通过。Ant Design 生产 chunk 体积警告仍为既存非阻塞提示。
+- 修复 CI backend 商品搜索集成失败：workflow 现在在 pytest 前启动并等待 MySQL、Redis、Elasticsearch，失败时输出三项服务日志；本地 Compose 配置与 workflow 服务检查通过。
 
 ## 2026-08-04
 

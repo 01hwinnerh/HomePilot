@@ -196,6 +196,7 @@
 - 错误为 MySQL `1054 Unknown column 'products.category_id'`。代码和隔离测试库已按最新 metadata 工作，未修改业务数据，也未切换 Elasticsearch read alias。
 - 该问题是用户本地业务库未执行最新迁移，不是代码兼容性问题。按项目约定暂停自动迁移，等待用户在 `backend` 目录手动执行 `uv run alembic upgrade head` 后再复验重建命令。
 - 用户已完成迁移；首次重建又发现“read alias 尚不存在”时 Elasticsearch `ignore=[404]` 返回错误响应体，已修复为忽略该响应并直接创建 alias。修复后重建成功，alias 指向新的版本化索引，当前文档数为 2。
+- CI backend 首次运行商品搜索集成测试失败，根因是 workflow 只启动 MySQL/Redis，没有启动 Compose 中已存在的 Elasticsearch；已将启动命令、健康等待超时（180 秒）和失败日志改为同时覆盖 `mysql redis elasticsearch`。本地 Compose 配置和 workflow 服务断言已通过。
 
 | 时间 | 现象 | 处理 |
 |---|---|---|
